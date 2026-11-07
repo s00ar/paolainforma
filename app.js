@@ -108,6 +108,15 @@ function card(title, text, contact, remove, driver = false) {
     badge.className = 'mobility-badge';
     badge.textContent = 'Disponible ahora';
     button.className = 'mobility-whatsapp';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'mobility-icon mobility-whatsapp-icon');
+    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    use.setAttribute('href', '#mobility-whatsapp-symbol');
+    svg.append(use);
+    button.prepend(svg);
     item.append(icon, details, badge, button);
   } else item.append(heading, description, button);
   return item;

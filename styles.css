@@ -98,14 +98,18 @@ button.calendar-day { border: 1px solid var(--blue); background: #eef6ff; cursor
 .mobility-help { padding: 16px; border: 1px solid #dbe7f8; border-radius: 14px; background: #f4f8fd; }
 .mobility-help-copy { display: flex; gap: 10px; align-items: flex-start; }
 .mobility-help h3, .mobility-planned h3 { margin: 0; }
-.mobility-icon { display: block; flex: 0 0 auto; width: 20px; height: 20px; }
+.mobility-icon { display: block; flex: 0 0 auto; width: 22px; height: 22px; }
 .mobility-symbol, .mobility-car { display: grid; place-items: center; flex: 0 0 auto; width: 36px; height: 36px; border-radius: 10px; background: #dceafb; color: #155da3; }
 .mobility-car { width: 48px; height: 48px; border-radius: 50%; }
 .mobility-car .mobility-icon { width: 28px; height: 28px; }
-.mobility-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.mobility-actions { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin-top: 14px; }
 .mobility-actions button, .mobility-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding-inline: 12px; font-weight: 700; }
 .mobility-actions .outline { background: #fff; }
-.mobility-google .google-g { font-size: 17px; }
+.google-mark { display: block; flex: 0 0 18px; width: 18px; height: 18px; object-fit: contain; }
+.mobility-actions .mobility-google { border-color: #c8d0da; color: #1f1f1f; }
+.mobility-icon-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
+.mobility-whatsapp-icon { width: 20px; height: 20px; }
+.mobility-planned .mobility-actions { align-items: center; }
 .mobility-active { padding: 0; border-color: #cddff3; background: #fff; overflow: hidden; }
 .mobility-active-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 14px; background: #e9f2ff; }
 .mobility-active-head h3 { display: flex; align-items: center; gap: 8px; font-size: clamp(17px, 2vw, 23px); }
@@ -123,7 +127,8 @@ button.calendar-day { border: 1px solid var(--blue); background: #eef6ff; cursor
 .mobility-status { color: #505b66; }
 .mobility-status:empty { display: none; }
 .mobility-notice { display: flex; gap: 10px; background: #edf5fd; border: 1px solid #dbe7f8; border-radius: 8px; padding: 12px 14px; }
-.mobility-notice > span:first-child { color: var(--blue); font-size: 17px; line-height: 1.2; }
+.mobility-notice { max-width: none; font-size: 13px; line-height: 1.5; }
+.mobility-info { width: 19px; height: 19px; color: var(--blue); }
 @media (min-width: 1100px) {
   .mobility-driver-row { grid-template-columns: auto minmax(0, 1fr) auto auto; }
   .mobility-whatsapp { grid-column: auto; }
