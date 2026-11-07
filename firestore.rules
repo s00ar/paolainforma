@@ -91,14 +91,6 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    match /users/{uid} {
-      allow get: if owner(uid);
-      allow create, update: if owner(uid)
-        && (resource == null ? request.resource.data.keys().hasOnly(['uid', 'displayName', 'email', 'photoURL', 'provider', 'lastLoginAt'])
-          : request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid', 'displayName', 'email', 'photoURL', 'provider', 'lastLoginAt']))
-        && request.resource.data.uid == uid && request.resource.data.email == request.auth.token.email
-        && request.resource.data.provider == 'google';
-    }
 
 
     match /webDriverProfiles/{uid} {
@@ -142,9 +134,10 @@ service cloud.firestore {
         get(/databases/$(database)/documents/webPlannedTrips/$(tripId)).data.owner == request.auth.uid;
     }
 
-    // Preserve the existing mobile rules outside the new rides collections.
+    // Preserve the confirmed legacy access for all authenticated mobile/backoffice users.
+    // Web roles live only in webAdminConfig/webAdmins, never in the legacy users collection.
     match /{collection}/{document=**} {
-      allow read, write: if request.auth != null && !googleUser() &&
+      allow read, write: if request.auth != null &&
         !(collection in ['webDriverProfiles', 'webAvailableDrivers', 'webPlannedTrips', 'webTripContacts',
           'webAdminConfig', 'webAdmins', 'webDriverBlocks', 'webBlogPosts', 'webCalendarEvents']);
     }
