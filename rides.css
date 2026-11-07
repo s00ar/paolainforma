@@ -67,9 +67,9 @@
   #viajes .mobility-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   #viajes .mobility-guide, #viajes .mobility-results { display: contents; }
   #viajes .mobility-intro { order: 1; margin: 0; }
-  #viajes .mobility-help:first-of-type { order: 2; }
+
   #viajes .mobility-active { order: 3; }
-  #viajes .mobility-help:last-of-type { order: 4; }
+  #viajes .mobility-help { order: 4; }
   #viajes .mobility-planned { order: 5; }
 }
 @media (max-width: 767px) {

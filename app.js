@@ -1,6 +1,6 @@
-import { setEditorialSession, connectEditorial } from './editorial.js?v=20261107-5';
-import { firebaseConfig } from './firebase-config.js?v=20261107-5';
-import { ridesEnabled } from './rides-settings.js?v=20261107-5';
+import { setEditorialSession, connectEditorial } from './editorial.js?v=20261107-6';
+import { firebaseConfig } from './firebase-config.js?v=20261107-6';
+import { ridesEnabled } from './rides-settings.js?v=20261107-6';
 
 const byId = id => document.getElementById(id);
 const authDialog = byId('authDialog');
@@ -270,7 +270,7 @@ driverForm.onsubmit = event => {
     const form = new FormData(driverForm);
     const name = form.get('name').trim();
     const phone = phoneNumber(form.get('phone'));
-    if (!name || !form.has('consent')) throw new Error('Completá el nombre y confirmá que sos chofer de Remix.');
+    if (!name || !form.has('consent')) throw new Error('Completá el nombre y confirmá que sos chofer de Remis.');
     const batch = api.writeBatch(db);
     batch.set(api.doc(db, 'webDriverProfiles', uid), { name, phone });
     batch.set(api.doc(db, 'webAvailableDrivers', uid), {
