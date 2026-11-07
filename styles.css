@@ -115,3 +115,7 @@ button.calendar-day { border: 1px solid var(--blue); background: #eef6ff; cursor
   .blog-feature { grid-template-columns: minmax(0, 1fr); }
   .blog-feature-image { padding: 0 16px 16px; }
 }
+
+/* Services that have not been connected must not appear as working links. */
+.service-grid .service-pending { padding: 20px; background: #fff; border: 1px solid var(--line); border-radius: 10px; }
+.job-empty { padding: 16px 0; color: #505b66; line-height: 1.6; font-size: 15px; }
