@@ -50,6 +50,9 @@ function openAuth(next) {
   if (!authDialog.open) authDialog.showModal();
 }
 login.onclick = () => openAuth();
+const mobilityAuth = [...document.querySelectorAll('[data-mobility-auth]')];
+mobilityAuth.forEach(button => { button.onclick = () => openAuth(); });
+byId('driver-example-contact').onclick = () => toast('Este perfil muestra cómo funciona la lista. Elegí un conductor activo para contactarlo.');
 document.querySelectorAll('[data-auth]').forEach(button => {
   button.onclick = () => currentUser ? toast('La publicación de oportunidades todavía no está disponible.') : openAuth();
 });
@@ -80,7 +83,7 @@ function formatDate(timestamp) {
   return dateFormat.format(timestamp);
 }
 
-function card(title, text, contact, remove) {
+function card(title, text, contact, remove, driver = false) {
   const item = document.createElement('li');
   item.className = 'ride-item';
   const heading = document.createElement('h4');
@@ -92,7 +95,21 @@ function card(title, text, contact, remove) {
   button.className = 'outline';
   button.textContent = remove ? 'Retirar viaje' : 'Contactar por WhatsApp';
   button.onclick = remove || contact;
-  item.append(heading, description, button);
+  if (driver) {
+    item.classList.add('mobility-driver-row');
+    const icon = document.createElement('span');
+    icon.className = 'mobility-car';
+    icon.textContent = title.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
+    icon.setAttribute('aria-hidden', 'true');
+    const details = document.createElement('div');
+    details.className = 'mobility-driver-details';
+    details.append(heading, description);
+    const badge = document.createElement('span');
+    badge.className = 'mobility-badge';
+    badge.textContent = 'Disponible ahora';
+    button.className = 'mobility-whatsapp';
+    item.append(icon, details, badge, button);
+  } else item.append(heading, description, button);
   return item;
 }
 
@@ -102,9 +119,10 @@ function renderLists() {
   const planned = trips.filter(trip => trip.departure > now);
   const count = byId('driver-count');
   count.hidden = active.length === 0;
+  byId('driver-example').hidden = active.length > 0;
   count.textContent = active.length + (active.length === 1 ? ' disponible' : ' disponibles');
   byId('driver-list').replaceChildren(...active.map(driver =>
-    card(driver.name, 'Disponible hasta ' + formatDate(driver.expiresAt), () => loadContact(driver.name, 'webDriverProfiles', driver.id))));
+    card(driver.name, 'Disponible hasta ' + formatDate(driver.expiresAt), () => loadContact(driver.name, 'webDriverProfiles', driver.id), null, true)));
   byId('trip-list').replaceChildren(...planned.map(trip => card(
     trip.origin + ' → ' + trip.destination,
     formatDate(trip.departure) + ' (hora de Italia) · ' + trip.seats + (trip.seats === 1 ? ' lugar libre' : ' lugares libres'),
@@ -298,6 +316,7 @@ async function initFirebase() {
     setEditorialSession(user);
     login.textContent = user ? 'Mi cuenta' : 'Ingresar';
     googleButton.hidden = Boolean(user);
+    mobilityAuth.forEach(button => { button.hidden = Boolean(user); });
     logout.hidden = !user;
     if (!user) {
       contactRequest++;

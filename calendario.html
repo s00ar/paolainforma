@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1D70B8">
+  <meta name="description" content="Agenda de eventos de Paola, Calabria.">
+  <link rel="canonical" href="https://paolainforma.pixvo.tech/calendario.html">
+  <link rel="icon" href="./assets/favicon.ico">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Calendario de Paola · Paola Informa</title>
+</head>
+<body>
+  <header class="top standalone-top">
+    <a class="brand" href="./" aria-label="Paola Informa, inicio">
+      <img class="brand-logo" src="./assets/paola-informa-poster.png" alt="Paola Informa">
+    </a>
+    <a class="outline" href="./">Volver al inicio</a>
+  </header>
+  <main>
+<section class="section" id="calendario" aria-labelledby="calendar-title">
+  <div class="section-head"><div>
+    <span class="eyebrow">AGENDA DE PAOLA</span>
+    <h1 id="calendar-title">Calendario de Paola</h1>
+  </div></div>
+  <div class="calendar-box">
+    <div class="calendar-controls">
+      <button type="button" class="outline" id="calendar-prev" aria-label="Mes anterior">←</button>
+      <h3 id="calendar-month" aria-live="polite"></h3>
+      <button type="button" class="outline" id="calendar-next" aria-label="Mes siguiente">→</button>
+      <button type="button" class="outline" id="calendar-today">Hoy</button>
+    </div>
+    <div class="calendar-grid" id="calendar-grid" aria-label="Días del mes"></div>
+    <div class="calendar-controls">
+      <h4 id="calendar-selection">Eventos del mes</h4>
+      <button type="button" class="outline" id="calendar-clear" hidden>Ver todo el mes</button>
+    </div>
+    <p id="calendar-status" role="status"></p>
+    <ul class="calendar-events" id="calendar-events"></ul>
+  </div>
+</section>
+  </main>
+  <footer><a href="./">Paola Informa</a><a href="./#politicas">Políticas y condiciones</a></footer>
+  <script type="module" src="./calendar.js"></script>
+</body>
+</html>
