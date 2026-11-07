@@ -47,17 +47,16 @@ dialog .close { min-width: 44px; color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 /* Noticia destacada: los flyers se conservan completos. */
-.local-event { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 16px; margin-bottom: 20px; }
+.local-event { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; margin-bottom: 20px; }
 .local-event-copy { padding: clamp(18px, 3vw, 32px); }
 .local-event-copy h3 { font-size: clamp(22px, 3vw, 30px); }
 .local-event-copy p { color: #505b66; font-size: 15px; }
 .local-event-copy .event-source { font-size: 12px; }
 .event-flyers { display: grid; justify-items: center; align-items: start; padding: 16px; }
-.event-flyers figure { width: min(100%, 300px); margin: 0; }
-.event-flyers a { display: block; color: var(--blue); font-size: 12px; font-weight: 700; }
+.event-flyers figure { width: clamp(104px, 22vw, 144px); margin: 0; }
+.event-flyers a { display: block; }
 .event-flyers img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); }
-.event-flyer-caption { display: block; padding: 8px 0; }
 @media (max-width: 760px) {
   .local-event { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .event-flyers { padding-top: 0; }
+  .event-flyers { justify-items: start; padding-top: 0; }
 }
