@@ -1,6 +1,6 @@
-import { setEditorialSession, connectEditorial } from './editorial.js';
-import { firebaseConfig } from './firebase-config.js';
-import { ridesEnabled } from './rides-settings.js';
+import { setEditorialSession, connectEditorial } from './editorial.js?v=20261107-4';
+import { firebaseConfig } from './firebase-config.js?v=20261107-4';
+import { ridesEnabled } from './rides-settings.js?v=20261107-4';
 
 const byId = id => document.getElementById(id);
 const authDialog = byId('authDialog');
