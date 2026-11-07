@@ -1,0 +1,93 @@
+/* Scoped mobility layout. Loaded separately so older shared CSS cannot hide this design. */
+#viajes { --ride-ink: #172440; --ride-blue: #005ce6; width: 100%; max-width: 1720px; padding: 64px clamp(20px, 3.8vw, 64px); color: var(--ride-ink); background: #fff; font-size: 16px; line-height: 1.5; }
+#viajes .mobility-grid { display: grid; grid-template-columns: minmax(0, .39fr) minmax(0, .61fr); gap: 26px; align-items: start; }
+#viajes .mobility-guide, #viajes .mobility-results { display: grid; gap: 24px; min-width: 0; }
+#viajes .mobility-results { padding-top: 22px; }
+#viajes .mobility-intro { margin-bottom: 12px; }
+#viajes .eyebrow { font-size: 15px; letter-spacing: .2px; color: var(--ride-blue); }
+#viajes h2 { color: var(--ride-ink); font: 800 clamp(32px, 3vw, 46px)/1.12 Manrope, sans-serif; letter-spacing: -1.5px; margin: 6px 0 14px; }
+#viajes h3 { color: #0e1833; font: 800 clamp(21px, 1.65vw, 27px)/1.25 Manrope, sans-serif; letter-spacing: -.7px; margin: 0; }
+#viajes p { margin: 8px 0 0; }
+#viajes .mobility-intro p { color: #4c6384; font-size: 17px; font-weight: 500; }
+#viajes .mobility-help { padding: 18px; background: #f5f9ff; border: 1px solid #dce9fb; border-radius: 18px; box-shadow: 0 2px 5px #16376003; }
+#viajes .mobility-help-copy { display: flex; align-items: flex-start; gap: 14px; }
+#viajes .mobility-help-copy > div { min-width: 0; }
+#viajes .mobility-help p, #viajes .mobility-planned p { color: var(--ride-ink); line-height: 1.55; }
+#viajes .mobility-icon { display: block; width: 24px; height: 24px; flex: 0 0 auto; }
+#viajes .mobility-symbol { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; border-radius: 12px; background: #e0edff; color: var(--ride-blue); }
+#viajes .mobility-symbol svg { width: 32px; height: 32px; }
+#viajes .mobility-actions { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; margin-top: 24px; }
+#viajes .mobility-actions > a, #viajes .mobility-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 16px; min-height: 50px; font: 700 15px/1.3 'DM Sans', sans-serif; border-radius: 9px; cursor: pointer; }
+#viajes .mobility-help .mobility-actions > * { flex: 1 1 auto; }
+#viajes .primary { background: var(--ride-blue); color: white; border: 1px solid var(--ride-blue); }
+#viajes .outline { background: white; color: #111a32; border: 1px solid #bdcbe0; box-shadow: 0 1px 2px #15294008; }
+#viajes .google-mark { width: 24px; height: 24px; flex: 0 0 24px; object-fit: contain; }
+#viajes :is(a, button):focus-visible { outline: 3px solid #0046b5; outline-offset: 4px; }
+#viajes .primary:hover { background: #004ab9; }
+#viajes .outline:hover { background: #eef5ff; }
+#viajes .mobility-active { border: 1px solid #d6e5fb; border-radius: 16px; padding: 0; background: #fbfdff; overflow: hidden; scroll-margin-top: 24px; }
+#viajes .mobility-active-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding: 18px; background: #eaf3ff; }
+#viajes .mobility-active-head h3 { display: flex; align-items: center; gap: 12px; }
+#viajes .mobility-active-head p { margin: 5px 0 0 34px; color: #455c7b; }
+#viajes .mobility-dot { width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%; background: #00b934; box-shadow: inset 0 2px 4px #ffffff55; }
+#viajes .mobility-active:not([data-state="ready"]) .mobility-dot { background: #8395ad; }
+#viajes .mobility-active-body { padding: 12px; }
+#viajes .ride-list { display: grid; list-style: none; gap: 12px; padding: 0; margin: 0; }
+#viajes .ride-list:empty { display: none; }
+#viajes .ride-item { border: 1px solid #e0e7f1; border-radius: 15px; background: white; padding: 14px; min-width: 0; }
+#viajes .mobility-driver-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+#viajes .mobility-car { display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%; background: #e4edf9; color: #31557d; font-size: 21px; font-weight: 700; }
+#viajes .ride-item h4 { margin: 0; font-size: 18px; line-height: 1.3; overflow-wrap: anywhere; color: #111a32; }
+#viajes .mobility-driver-details p { font-size: 14px; margin: 6px 0 0; color: #4c6384; }
+#viajes .mobility-badge { display: inline-flex; align-items: center; gap: 7px; width: fit-content; border-radius: 99px; background: #d5fbdc; color: #086523; padding: 7px 12px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+#viajes .mobility-driver-row .mobility-badge::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #00ad31; }
+#viajes .mobility-whatsapp { display: inline-flex; align-items: center; justify-content: center; gap: 9px; grid-column: 2 / -1; justify-self: stretch; min-height: 48px; border: 0; border-radius: 9px; background: #008a2d; color: white; padding: 11px 14px; font: 700 15px/1.3 'DM Sans', sans-serif; cursor: pointer; }
+#viajes .mobility-whatsapp:hover { background: #006e24; }
+#viajes .mobility-planned { padding: 0 6px; }
+#viajes .mobility-planned .mobility-actions { align-items: center; margin-top: 18px; }
+#viajes #trip-list { margin-top: 16px; }
+#viajes #trip-list .outline { min-height: 48px; margin-top: 12px; }
+#viajes .mobility-status { color: #526680; font-size: 15px; line-height: 1.5; }
+#viajes .mobility-status:empty { display: none; }
+#viajes .mobility-active-body .mobility-status { margin: 0; padding: 28px 18px; background: #f5f9ff; border: 1px dashed #cedcf0; border-radius: 12px; }
+#viajes [data-state="error"] { color: #873d31; }
+#viajes .mobility-status[data-state="loading"]::before { content: ''; display: inline-block; vertical-align: middle; width: 16px; height: 16px; margin-right: 9px; border: 2px solid #c8d3e2; border-top-color: #005ce6; border-radius: 50%; animation: mobility-spin 1s linear infinite; }
+#viajes .mobility-notice { display: flex; align-items: flex-start; gap: 14px; max-width: none; margin-top: 28px; padding: 16px 18px; background: #f3f8ff; border: 1px solid #dce9fb; border-radius: 12px; color: #344c70; font-size: 16px; line-height: 1.55; }
+#viajes .mobility-info { color: var(--ride-blue); margin-top: 2px; }
+#viajes .mobility-notice a { color: #24502e; text-decoration: underline; text-underline-offset: 3px; }
+@keyframes mobility-spin { to { transform: rotate(360deg); } }
+@media (min-width: 1280px) {
+  #viajes .mobility-help .mobility-actions { flex-wrap: nowrap; gap: 10px; }
+  #viajes .mobility-help .mobility-actions > * { font-size: 14px; padding-inline: 10px; gap: 8px; }
+  #viajes .mobility-driver-row { grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 10px; }
+  #viajes .mobility-whatsapp { grid-column: auto; font-size: 14px; padding-inline: 12px; }
+}
+@media (max-width: 1023px) {
+  #viajes { padding-block: 40px; }
+  #viajes .mobility-grid { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  #viajes .mobility-guide, #viajes .mobility-results { display: contents; }
+  #viajes .mobility-intro { order: 1; margin: 0; }
+  #viajes .mobility-help:first-of-type { order: 2; }
+  #viajes .mobility-active { order: 3; }
+  #viajes .mobility-help:last-of-type { order: 4; }
+  #viajes .mobility-planned { order: 5; }
+}
+@media (max-width: 767px) {
+  #viajes { padding: 36px 20px; }
+  #viajes h2 { font-size: 34px; }
+  #viajes h3 { font-size: 22px; }
+  #viajes .eyebrow { font-size: 13px; }
+  #viajes .mobility-help { padding: 16px; }
+  #viajes .mobility-help-copy { gap: 10px; }
+  #viajes .mobility-symbol { width: 36px; height: 36px; flex-basis: 36px; }
+  #viajes .mobility-symbol svg { width: 28px; height: 28px; }
+  #viajes .mobility-actions > a, #viajes .mobility-actions > button { width: 100%; flex: 1 1 100%; min-height: 52px; }
+  #viajes .mobility-active-head { padding: 16px; }
+  #viajes .mobility-active-head p { margin-left: 0; }
+  #viajes .mobility-driver-row { grid-template-columns: auto minmax(0, 1fr); }
+  #viajes .mobility-driver-row .mobility-badge { grid-column: 2; }
+  #viajes .mobility-whatsapp { grid-column: 1 / -1; width: 100%; }
+  #viajes .mobility-car { width: 48px; height: 48px; font-size: 18px; }
+  #viajes .mobility-notice { padding: 14px; font-size: 14px; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { #viajes .mobility-status::before { animation: none; } }

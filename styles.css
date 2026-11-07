@@ -90,56 +90,8 @@ button.calendar-day { border: 1px solid var(--blue); background: #eef6ff; cursor
 .blog-posts summary { color: var(--blue); cursor: pointer; font-weight: 700; }
 .blog-body { white-space: pre-wrap; overflow-wrap: anywhere; }
 
-/* Viajes compartidos */
-.mobility-grid { grid-template-columns: minmax(0, .79fr) minmax(0, 1.21fr); align-items: start; gap: clamp(14px, 2.2vw, 26px); color: #162440; }
-.mobility-guide, .mobility-results { display: grid; gap: 18px; min-width: 0; }
-.mobility-intro h2 { font-size: clamp(29px, 4.2vw, 44px); margin: 6px 0 8px; }
-.mobility-intro p, .mobility-help p, .mobility-planned p { margin: 6px 0 0; line-height: 1.55; color: #354962; }
-.mobility-help { padding: 16px; border: 1px solid #dbe7f8; border-radius: 14px; background: #f4f8fd; }
-.mobility-help-copy { display: flex; gap: 10px; align-items: flex-start; }
-.mobility-help h3, .mobility-planned h3 { margin: 0; }
-.mobility-icon { display: block; flex: 0 0 auto; width: 22px; height: 22px; }
-.mobility-symbol, .mobility-car { display: grid; place-items: center; flex: 0 0 auto; width: 36px; height: 36px; border-radius: 10px; background: #dceafb; color: #155da3; }
-.mobility-car { width: 48px; height: 48px; border-radius: 50%; }
-.mobility-car .mobility-icon { width: 28px; height: 28px; }
-.mobility-actions { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; margin-top: 14px; }
-.mobility-actions button, .mobility-actions a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding-inline: 12px; font-weight: 700; }
-.mobility-actions .outline { background: #fff; }
-.google-mark { display: block; flex: 0 0 18px; width: 18px; height: 18px; object-fit: contain; }
-.mobility-actions .mobility-google { border-color: #c8d0da; color: #1f1f1f; }
-.mobility-icon-defs { position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none; }
-.mobility-whatsapp-icon { width: 20px; height: 20px; }
-.mobility-planned .mobility-actions { align-items: center; }
-.mobility-active { padding: 0; border-color: #cddff3; background: #fff; overflow: hidden; }
-.mobility-active-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 14px; background: #e9f2ff; }
-.mobility-active-head h3 { display: flex; align-items: center; gap: 8px; font-size: clamp(17px, 2vw, 23px); }
-.mobility-active-head p { margin: 4px 0 0; }
-.mobility-active-body { padding: 10px; }
-.mobility-active-body .ride-list { margin: 0; }
-.mobility-active-body .mobility-status { margin: 9px 2px 1px; font-size: 13px; }
-.mobility-dot { flex: 0 0 auto; width: 12px; height: 12px; border-radius: 50%; background: #159447; }
-.mobility-driver-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 10px; }
-.mobility-driver-details p { margin: 3px 0; font-size: 13px; }
-.mobility-badge, .mobility-example { display: inline-block; width: fit-content; background: #e0f5e8; border-radius: 999px; color: #22513b; font-size: 11px; font-weight: 700; padding: 6px 8px; white-space: nowrap; }
-.mobility-example { background: #edf1f6; color: #41536b; padding: 2px 6px; }
-.mobility-whatsapp { grid-column: 2 / -1; justify-self: end; display: inline-flex; gap: 7px; align-items: center; justify-content: center; min-height: 44px; border: 0; border-radius: 7px; padding: 8px 12px; background: #0e763b; color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-.mobility-planned { padding: 0 4px; }
-.mobility-status { color: #505b66; }
-.mobility-status:empty { display: none; }
-.mobility-notice { display: flex; gap: 10px; background: #edf5fd; border: 1px solid #dbe7f8; border-radius: 8px; padding: 12px 14px; }
-.mobility-notice { max-width: none; font-size: 13px; line-height: 1.5; }
-.mobility-info { width: 19px; height: 19px; color: var(--blue); }
-@media (min-width: 1100px) {
-  .mobility-driver-row { grid-template-columns: auto minmax(0, 1fr) auto auto; }
-  .mobility-whatsapp { grid-column: auto; }
-}
-@media (max-width: 760px) {
-  .mobility-grid { grid-template-columns: minmax(0, 1fr); }
-  .mobility-help .mobility-actions > * { flex: 1 1 158px; }
-  .mobility-driver-row { grid-template-columns: auto minmax(0, 1fr); }
-  .mobility-driver-row .mobility-badge { grid-column: 2; }
-  .mobility-whatsapp { grid-column: 1 / -1; justify-self: stretch; }
-}
+.google-mark { display: block; width: 18px; height: 18px; object-fit: contain; }
+.mobility-icon-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 /* Páginas de calendario y blog */
 .standalone-top .outline { display: inline-flex; align-items: center; min-height: 44px; }

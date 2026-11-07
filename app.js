@@ -52,7 +52,6 @@ function openAuth(next) {
 login.onclick = () => openAuth();
 const mobilityAuth = [...document.querySelectorAll('[data-mobility-auth]')];
 mobilityAuth.forEach(button => { button.onclick = () => openAuth(); });
-byId('driver-example-contact').onclick = () => toast('Este perfil muestra cómo funciona la lista. Elegí un conductor activo para contactarlo.');
 document.querySelectorAll('[data-auth]').forEach(button => {
   button.onclick = () => currentUser ? toast('La publicación de oportunidades todavía no está disponible.') : openAuth();
 });
@@ -127,8 +126,7 @@ function renderLists() {
   const active = drivers.filter(driver => driver.expiresAt > now);
   const planned = trips.filter(trip => trip.departure > now);
   const count = byId('driver-count');
-  count.hidden = active.length === 0;
-  byId('driver-example').hidden = active.length > 0;
+  count.hidden = !ridesEnabled || !currentUser || Boolean(driverError);
   count.textContent = active.length + (active.length === 1 ? ' disponible' : ' disponibles');
   byId('driver-list').replaceChildren(...active.map(driver =>
     card(driver.name, 'Disponible hasta ' + formatDate(driver.expiresAt), () => loadContact(driver.name, 'webDriverProfiles', driver.id), null, true)));
@@ -143,6 +141,13 @@ function renderLists() {
     : !currentUser ? 'Ingresá con Google para consultar y publicar.' : '';
   byId('driver-status').textContent = unavailable || driverError || (active.length ? '' : 'No hay choferes disponibles en este momento.');
   byId('trip-status').textContent = unavailable || tripError || (planned.length ? '' : 'No hay viajes programados.');
+  for (const [kind, error, entries] of [['driver', driverError, active], ['trip', tripError, planned]]) {
+    const state = unavailable ? 'unavailable' : error.startsWith('Cargando') ? 'loading'
+      : error ? 'error' : entries.length ? 'ready' : 'empty';
+    byId(kind + '-status').dataset.state = state;
+    byId(kind + '-list').setAttribute('aria-busy', String(state === 'loading'));
+    if (kind === 'driver') byId('conductores-activos').dataset.state = state;
+  }
 }
 
 function observeLists() {
