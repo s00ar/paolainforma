@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function googleUser() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
+    function owner(uid) {
+      return googleUser() && request.auth.uid == uid;
+    }
+
+    function textBetween(value, maxLength) {
+      return value is string && value.size() >= 1 && value.size() <= maxLength;
+    }
+
+    function validPhone(value) {
+      return value is string && value.matches('[+][1-9][0-9]{7,14}');
+    }
+
+    function nowMillis() {
+      return request.time.toMillis();
+    }
+
+    function validFields(keys) {
+      return request.resource.data.keys().hasAll(keys) && request.resource.data.keys().hasOnly(keys);
+    }
+
+    match /webDriverProfiles/{uid} {
+      allow get: if owner(uid) || (googleUser() &&
+        get(/databases/$(database)/documents/webAvailableDrivers/$(uid)).data.expiresAt > nowMillis());
+      allow create, update: if owner(uid) && validFields(['name', 'phone'])
+        && textBetween(request.resource.data.name, 70) && validPhone(request.resource.data.phone);
+    }
+
+    match /webAvailableDrivers/{uid} {
+      allow get: if owner(uid) || (googleUser() && resource.data.expiresAt > nowMillis());
+      allow list: if googleUser() && request.query.limit <= 50;
+      allow create, update: if owner(uid) && validFields(['name', 'expiresAt'])
+        && textBetween(request.resource.data.name, 70)
+        && getAfter(/databases/$(database)/documents/webDriverProfiles/$(uid)).data.name == request.resource.data.name
+        && request.resource.data.expiresAt is int
+        && request.resource.data.expiresAt > nowMillis()
+        && request.resource.data.expiresAt <= nowMillis() + 29100000;
+      allow delete: if owner(uid);
+    }
+
+    match /webPlannedTrips/{tripId} {
+      allow get: if googleUser();
+      allow list: if googleUser() && request.query.limit <= 50;
+      allow create: if owner(request.resource.data.owner)
+        && validFields(['owner', 'origin', 'destination', 'departure', 'seats'])
+        && textBetween(request.resource.data.origin, 80)
+        && textBetween(request.resource.data.destination, 80)
+        && request.resource.data.departure is int && request.resource.data.departure > nowMillis()
+        && request.resource.data.seats is int && request.resource.data.seats >= 1 && request.resource.data.seats <= 8;
+      allow delete: if owner(resource.data.owner);
+    }
+
+    match /webTripContacts/{tripId} {
+      allow get: if googleUser() &&
+        get(/databases/$(database)/documents/webPlannedTrips/$(tripId)).data.departure > nowMillis();
+      allow create: if googleUser() && validFields(['phone']) && validPhone(request.resource.data.phone)
+        && getAfter(/databases/$(database)/documents/webPlannedTrips/$(tripId)).data.owner == request.auth.uid;
+      allow delete: if googleUser() &&
+        get(/databases/$(database)/documents/webPlannedTrips/$(tripId)).data.owner == request.auth.uid;
+    }
+
+    // Preserve the existing mobile rules outside the new rides collections.
+    match /{collection}/{document=**} {
+      allow read, write: if request.auth != null &&
+        !(collection in ['webDriverProfiles', 'webAvailableDrivers', 'webPlannedTrips', 'webTripContacts']);
+    }
+  }
+}
