@@ -52,8 +52,8 @@ dialog .close { min-width: 44px; color: var(--ink); }
 .local-event-copy h3 { font-size: clamp(22px, 3vw, 30px); }
 .local-event-copy p { color: #505b66; font-size: 15px; }
 .local-event-copy .event-source { font-size: 12px; }
-.event-flyers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; padding: 16px; }
-.event-flyers figure { margin: 0; }
+.event-flyers { display: grid; justify-items: center; align-items: start; padding: 16px; }
+.event-flyers figure { width: min(100%, 300px); margin: 0; }
 .event-flyers a { display: block; color: var(--blue); font-size: 12px; font-weight: 700; }
 .event-flyers img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); }
 .event-flyer-caption { display: block; padding: 8px 0; }
