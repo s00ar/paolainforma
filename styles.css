@@ -60,3 +60,50 @@ dialog .close { min-width: 44px; color: var(--ink); }
   .local-event { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .event-flyers { justify-items: start; padding-top: 0; }
 }
+
+/* Agenda y administración */
+.calendar-box { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: clamp(12px, 4vw, 26px); }
+.calendar-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.calendar-controls h3 { flex: 1; margin: 0; text-align: center; text-transform: capitalize; }
+.calendar-controls .outline { min-width: 44px; min-height: 44px; padding-inline: 10px; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-block: 14px; }
+.calendar-weekday { text-align: center; font-size: 12px; color: #505b66; }
+.calendar-day { min-width: 0; min-height: 44px; border-radius: 6px; display: grid; place-items: center; font: inherit; font-size: 14px; color: var(--ink); }
+button.calendar-day { border: 1px solid var(--blue); background: #eef6ff; cursor: pointer; font-weight: 700; }
+.calendar-day[aria-pressed="true"] { color: #fff; background: var(--blue); }
+.calendar-day[aria-current="date"] { outline: 2px solid var(--blue); outline-offset: -2px; }
+.calendar-events, .editorial-list { list-style: none; margin: 0; padding: 0; }
+.calendar-events li, .editorial-list li { padding: 12px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.calendar-events h4 { margin: 3px 0; }
+.calendar-events p { margin: 5px 0; }
+.calendar-events a { color: var(--blue); text-decoration: underline; }
+.editorial-dialog { width: min(680px, calc(100% - 24px)); padding: clamp(14px, 4vw, 28px); }
+.editorial-dialog details { padding: 12px 0; border-top: 1px solid var(--line); }
+.editorial-dialog summary { padding: 8px 0; font-weight: 700; cursor: pointer; }
+.editorial-form input:not([type="checkbox"]), .editorial-form textarea { display: block; width: 100%; min-height: 44px; margin-top: 5px; padding: 8px; border: 1px solid #9ba8b3; border-radius: 6px; font: inherit; font-size: 16px; }
+.editorial-form .editorial-check { display: flex; gap: 10px; align-items: center; }
+.editorial-check input { width: 22px; height: 22px; }
+.editorial-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 10px; }
+.editorial-list .outline { min-height: 44px; }
+.blog-posts { display: grid; gap: 12px; margin-bottom: 18px; }
+.blog-posts:empty { display: none; }
+.blog-posts summary { color: var(--blue); cursor: pointer; font-weight: 700; }
+.blog-body { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Disponibilidad y viajes programados */
+.mobility-grid { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: start; }
+.mobility-guide { display: grid; gap: 14px; }
+.mobility-guide section { padding: 6px 0 16px; border-bottom: 1px solid var(--line); }
+.mobility-guide h3 { margin: 0; }
+.mobility-guide p { line-height: 1.55; color: #505b66; }
+.mobility-guide button, .mobility-guide a { min-height: 44px; }
+.mobility-active { border-color: #bfd7ef; background: #f3f8ff; }
+.mobility-active .ride-item { background: #fff; }
+.mobility-active .ride-item button { border-color: #2e5a44; color: #2e5a44; }
+.mobility-badge { background: #dff3e6; border-radius: 999px; color: #22513b; font-size: 13px; font-weight: 700; padding: 8px 12px; }
+.mobility-planned { grid-column: 1 / -1; }
+.mobility-notice { background: #edf5fd; border-radius: 8px; padding: 14px 16px; }
+@media (max-width: 760px) {
+  .mobility-grid { grid-template-columns: minmax(0, 1fr); }
+  .mobility-guide button, .mobility-guide a { width: 100%; justify-content: center; }
+}

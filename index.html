@@ -14,32 +14,66 @@
     </figure>
   </div>
 </article>
-<div id="news" class="cards"><article class="news-card feature"><div class="photo photo1"><img src="./assets/comunidad-paola.jpg" alt="Personas recorren el centro de Paola durante una jornada comunitaria" loading="lazy"><span>COMUNIDAD</span></div><div class="card-copy"><small>DESTACADO · 5 MIN DE LECTURA</small><h3>Paola, una ciudad con historias que vale la pena compartir</h3><p>Las últimas novedades de nuestra comunidad, reunidas en un solo lugar.</p><a href="#noticias">Leer noticia ↗</a></div></article><article class="news-card"><div class="photo photo2"><img src="./assets/servicios-paola.jpg" alt="Santuario de San Francesco di Paola, uno de los lugares de referencia de la ciudad" loading="lazy"><span>SERVICIOS</span></div><div class="card-copy"><small>INFORMACIÓN ÚTIL</small><h3>Servicios y avisos importantes</h3><p>Consultá la información que necesitás para organizar tu día.</p><a href="#mapa">Ver servicios ↗</a></div></article></div></section><section class="band" id="agenda"><div><span class="eyebrow">AGENDA DE LA CIUDAD</span><h2>Hay planes cerca.</h2><p>Eventos, fechas y actividades para compartir.</p></div><a class="light-btn" href="#agenda">Ver calendario ↗</a></section><section class="section community" id="viajes" aria-labelledby="rides-title">
+<div id="blog-posts" class="blog-posts" aria-label="Entradas del blog"></div><div id="news" class="cards"><article class="news-card feature"><div class="photo photo1"><img src="./assets/comunidad-paola.jpg" alt="Personas recorren el centro de Paola durante una jornada comunitaria" loading="lazy"><span>COMUNIDAD</span></div><div class="card-copy"><small>DESTACADO · 5 MIN DE LECTURA</small><h3>Paola, una ciudad con historias que vale la pena compartir</h3><p>Las últimas novedades de nuestra comunidad, reunidas en un solo lugar.</p><a href="#noticias">Leer noticia ↗</a></div></article><article class="news-card"><div class="photo photo2"><img src="./assets/servicios-paola.jpg" alt="Santuario de San Francesco di Paola, uno de los lugares de referencia de la ciudad" loading="lazy"><span>SERVICIOS</span></div><div class="card-copy"><small>INFORMACIÓN ÚTIL</small><h3>Servicios y avisos importantes</h3><p>Consultá la información que necesitás para organizar tu día.</p><a href="#mapa">Ver servicios ↗</a></div></article></div></section><section class="band" id="agenda"><div><span class="eyebrow">AGENDA DE LA CIUDAD</span><h2>Hay planes cerca.</h2><p>Eventos, fechas y actividades para compartir.</p></div><a class="light-btn" href="#calendario">Ver calendario ↗</a></section><section class="section" id="calendario" aria-labelledby="calendar-title">
   <div class="section-head"><div>
-    <span class="eyebrow">NOS MOVEMOS JUNTOS</span>
-    <h2 id="rides-title">Viajes compartidos</h2>
-    <p>Contactá a un chofer disponible o sumate a un viaje ya planeado.</p>
+    <span class="eyebrow">AGENDA DE PAOLA</span>
+    <h2 id="calendar-title">Calendario</h2>
   </div></div>
-  <div class="ride-panels">
-    <section class="ride-panel" aria-labelledby="drivers-title">
+  <div class="calendar-box">
+    <div class="calendar-controls">
+      <button type="button" class="outline" id="calendar-prev" aria-label="Mes anterior">←</button>
+      <h3 id="calendar-month" aria-live="polite"></h3>
+      <button type="button" class="outline" id="calendar-next" aria-label="Mes siguiente">→</button>
+      <button type="button" class="outline" id="calendar-today">Hoy</button>
+    </div>
+    <div class="calendar-grid" id="calendar-grid" aria-label="Días del mes"></div>
+    <div class="calendar-controls">
+      <h4 id="calendar-selection">Eventos del mes</h4>
+      <button type="button" class="outline" id="calendar-clear" hidden>Ver todo el mes</button>
+    </div>
+    <p id="calendar-status" role="status"></p>
+    <ul class="calendar-events" id="calendar-events"></ul>
+  </div>
+</section>
+<section class="section community" id="viajes" aria-labelledby="rides-title">
+  <div class="section-head"><div>
+    <span class="eyebrow">MOVILIDAD EN PAOLA</span>
+    <h2 id="rides-title">Viajes compartidos</h2>
+    <p>Encontrá un chofer disponible o publicá un trayecto para compartir el gasto de combustible.</p>
+  </div></div>
+  <div class="ride-panels mobility-grid">
+    <div class="mobility-guide">
+      <section aria-labelledby="rides-now-guide">
+        <h3 id="rides-now-guide">Para viajar ahora</h3>
+        <p>Ingresá con Google y consultá los choferes activos. Elegí un perfil y tocá «Contactar por WhatsApp» para acordar el destino, el punto de encuentro y el aporte para combustible.</p>
+        <a class="primary" href="#conductores-activos">Ver conductores activos</a>
+      </section>
+      <section aria-labelledby="rides-driver-guide">
+        <h3 id="rides-driver-guide">Para ofrecerte como conductor</h3>
+        <p>Si sos chofer de Remix, ingresá con Google y abrí «Mi disponibilidad». Completá tu nombre y WhatsApp, elegí cuánto tiempo vas a estar disponible y confirmá. Podés retirarte de la lista antes de que venza el plazo.</p>
+        <button class="outline" type="button" id="manage-driver">Mi disponibilidad</button>
+      </section>
+    </div>
+    <section class="ride-panel mobility-active" id="conductores-activos" aria-labelledby="drivers-title">
       <div class="ride-panel-heading"><div>
-        <h3 id="drivers-title">Choferes disponibles ahora</h3>
-        <p>Choferes que se identifican como parte de Remix. Coordiná el trayecto por WhatsApp.</p>
-      </div><button class="primary" type="button" id="manage-driver">Mi disponibilidad</button></div>
+        <h3 id="drivers-title">Conductores activos ahora</h3>
+        <p>Choferes de Remix que se marcaron como disponibles.</p>
+      </div><span class="mobility-badge" id="driver-count" hidden></span></div>
       <p id="driver-status" role="status">Cargando disponibilidad…</p>
       <ul class="ride-list" id="driver-list"></ul>
     </section>
-    <section class="ride-panel" aria-labelledby="planned-title">
+    <section class="ride-panel mobility-planned" aria-labelledby="planned-title">
       <div class="ride-panel-heading"><div>
         <h3 id="planned-title">Viajes programados</h3>
-        <p>Publicá un trayecto con fecha y lugares libres para sumar acompañantes.</p>
+        <p>Sirven para organizar un trayecto que ya tenés previsto. Por ejemplo, si vas de Paola a Cosenza el sábado y tenés tres plazas libres, publicá el origen, el destino, la fecha y la hora. Quienes hagan el mismo recorrido pueden contactarte y compartir el gasto de combustible.</p>
       </div><button class="outline" type="button" id="publish-trip">Publicar un viaje</button></div>
       <p id="trip-status" role="status">Cargando viajes…</p>
       <ul class="ride-list" id="trip-list"></ul>
     </section>
   </div>
-  <p class="notice">Los viajes son acuerdos entre particulares para compartir gastos de combustible. Paola Informa no organiza, presta ni cobra por estos viajes y no verifica ni garantiza a conductores o acompañantes. <a href="#politicas">Leé las políticas y condiciones ↗</a></p>
-</section><section class="work" id="trabajo"><div class="work-intro"><span class="eyebrow">OPORTUNIDADES LOCALES</span><h2>El próximo paso<br>puede estar <em>acá.</em></h2><p>Compartí una oportunidad laboral o encontrá propuestas de la comunidad.</p><button class="dark-btn" data-auth>Publicar una oportunidad ↗</button></div><div class="jobs"><div class="job"><span class="job-icon">✳</span><div><small>COMERCIO · PAOLA</small><h3>Atención al cliente</h3><p>Jornada parcial · Publicado hace 2 días</p></div><a href="https://wa.me/393331234569" target="_blank" rel="noreferrer">Contactar ↗</a></div><div class="job"><span class="job-icon peach">↗</span><div><small>HOSTELERÍA · AMANTEA</small><h3>Ayudante de cocina</h3><p>Temporada · Publicado ayer</p></div><a href="https://wa.me/393331234570" target="_blank" rel="noreferrer">Contactar ↗</a></div><a class="text-link" href="#trabajo">Ver todas las oportunidades ↗</a></div></section><section class="section services" id="mapa"><span class="eyebrow">TODO A MANO</span><h2>La ciudad, más fácil.</h2><div class="service-grid"><a href="#mapa"><span>⌖</span><b>Mapa local</b><small>Lugares y servicios cerca</small></a><a href="#agenda"><span>▦</span><b>Calendario</b><small>Fechas y recolección</small></a><a href="#mapa"><span>◉</span><b>Contactos útiles</b><small>Encontrá ayuda rápidamente</small></a><a href="#noticias"><span>♧</span><b>Notificaciones</b><small>Lo importante, al momento</small></a></div></section><section class="policy" id="politicas"><span class="eyebrow">TRANSPARENCIA</span><h2>Acuerdos entre personas, con claridad.</h2><p>La plataforma facilita el contacto entre usuarios. Cada persona decide si participa y acuerda directamente las condiciones. No intervenimos en la selección, coordinación o ejecución de viajes, ni en las ofertas laborales publicadas por usuarios. Consultá las <a href="#politicas">políticas completas</a> antes de usar estas secciones.</p></section></main><footer><a class="brand" href="#inicio"><picture class="brand-picture"><source srcset="./assets/paola-informa-logo-loop.webp" type="image/webp" media="(prefers-reduced-motion: no-preference)"><img class="brand-logo" src="./assets/paola-informa-poster.png" alt="Paola Informa · Tu comunidad, más cerca"></picture></a><span>Hecho para estar más cerca.</span><a href="#politicas">Políticas y condiciones</a></footer><dialog id="authDialog"><button class="close" id="closeDialog" aria-label="Cerrar">×</button><span class="eyebrow">PAOLA INFORMA</span><h2>Ingresá a tu comunidad</h2><p>Ingresá de forma segura con la cuenta Google que ya usás en Paola Informa.</p><button class="google-button" id="googleLogin"><span class="google-g">G</span> Continuar con Google <span>↗</span></button><button type="button" id="logout" class="outline" hidden>Cerrar sesión</button><small>Al continuar aceptás nuestras <a href="#politicas">políticas de uso</a>.</small></dialog><dialog id="driver-dialog" aria-labelledby="driver-title"><form id="driver-form" class="ride-form">
+  <p class="notice mobility-notice">Coordiná los detalles directamente con la otra persona y confirmá quién viaja antes de salir. Los viajes son acuerdos entre particulares para compartir combustible. Paola Informa facilita el contacto. <a href="#politicas">Políticas y condiciones ↗</a></p>
+</section>
+<section class="work" id="trabajo"><div class="work-intro"><span class="eyebrow">OPORTUNIDADES LOCALES</span><h2>El próximo paso<br>puede estar <em>acá.</em></h2><p>Compartí una oportunidad laboral o encontrá propuestas de la comunidad.</p><button class="dark-btn" data-auth>Publicar una oportunidad ↗</button></div><div class="jobs"><div class="job"><span class="job-icon">✳</span><div><small>COMERCIO · PAOLA</small><h3>Atención al cliente</h3><p>Jornada parcial · Publicado hace 2 días</p></div><a href="https://wa.me/393331234569" target="_blank" rel="noreferrer">Contactar ↗</a></div><div class="job"><span class="job-icon peach">↗</span><div><small>HOSTELERÍA · AMANTEA</small><h3>Ayudante de cocina</h3><p>Temporada · Publicado ayer</p></div><a href="https://wa.me/393331234570" target="_blank" rel="noreferrer">Contactar ↗</a></div><a class="text-link" href="#trabajo">Ver todas las oportunidades ↗</a></div></section><section class="section services" id="mapa"><span class="eyebrow">TODO A MANO</span><h2>La ciudad, más fácil.</h2><div class="service-grid"><a href="#mapa"><span>⌖</span><b>Mapa local</b><small>Lugares y servicios cerca</small></a><a href="#calendario"><span>▦</span><b>Calendario</b><small>Fechas y recolección</small></a><a href="#mapa"><span>◉</span><b>Contactos útiles</b><small>Encontrá ayuda rápidamente</small></a><a href="#noticias"><span>♧</span><b>Notificaciones</b><small>Lo importante, al momento</small></a></div></section><section class="policy" id="politicas"><span class="eyebrow">TRANSPARENCIA</span><h2>Acuerdos entre personas, con claridad.</h2><p>La plataforma facilita el contacto entre usuarios. Cada persona decide si participa y acuerda directamente las condiciones. No intervenimos en la selección, coordinación o ejecución de viajes, ni en las ofertas laborales publicadas por usuarios. Consultá las <a href="#politicas">políticas completas</a> antes de usar estas secciones.</p></section></main><footer><a class="brand" href="#inicio"><picture class="brand-picture"><source srcset="./assets/paola-informa-logo-loop.webp" type="image/webp" media="(prefers-reduced-motion: no-preference)"><img class="brand-logo" src="./assets/paola-informa-poster.png" alt="Paola Informa · Tu comunidad, más cerca"></picture></a><span>Hecho para estar más cerca.</span><a href="#politicas">Políticas y condiciones</a></footer><dialog id="authDialog"><button class="close" id="closeDialog" aria-label="Cerrar">×</button><span class="eyebrow">PAOLA INFORMA</span><h2>Ingresá a tu comunidad</h2><p>Ingresá de forma segura con la cuenta Google que ya usás en Paola Informa.</p><button class="google-button" id="googleLogin"><span class="google-g">G</span> Continuar con Google <span>↗</span></button><button type="button" id="open-editorial" class="primary" hidden>Administrar sitio</button><button type="button" id="logout" class="outline" hidden>Cerrar sesión</button><small>Al continuar aceptás nuestras <a href="#politicas">políticas de uso</a>.</small></dialog><dialog id="driver-dialog" aria-labelledby="driver-title"><form id="driver-form" class="ride-form">
   <button type="button" class="close" data-close aria-label="Cerrar">×</button>
   <h2 id="driver-title">Mi disponibilidad</h2>
   <p id="my-driver-status"></p>
@@ -68,5 +102,48 @@
   <h2 id="contact-title"></h2>
   <p id="contact-status" role="status"></p>
   <a id="contact-link" class="wa" target="_blank" rel="noopener noreferrer" hidden>Abrir WhatsApp ↗</a>
+</dialog>
+<dialog id="editorial-dialog" class="editorial-dialog" aria-labelledby="editorial-title">
+  <button type="button" class="close" data-close aria-label="Cerrar">×</button>
+  <h2 id="editorial-title">Administración de Paola Informa</h2>
+  <p id="editorial-status" role="status"></p>
+  <details open>
+    <summary>Blog</summary>
+    <form class="editorial-form" id="blog-form">
+      <label>Título <input name="title" maxlength="120" required></label>
+      <label>Resumen <input name="summary" maxlength="280" required></label>
+      <label>Artículo <textarea name="body" rows="7" maxlength="15000" required></textarea></label>
+      <label class="editorial-check"><input type="checkbox" name="published"> Publicar en la portada</label>
+      <div class="editorial-actions"><button type="submit" class="primary">Guardar entrada</button><button type="reset" class="outline">Nueva entrada</button></div>
+    </form>
+    <ul class="editorial-list" id="editorial-blog-list"></ul>
+  </details>
+  <details>
+    <summary>Calendario</summary>
+    <form class="editorial-form" id="event-form">
+      <label>Título <input name="title" maxlength="120" required></label>
+      <label>Fecha <input name="date" type="date" required></label>
+      <label>Hora local de Paola <input name="time" type="time"></label>
+      <label>Lugar <input name="location" maxlength="140"></label>
+      <label>Descripción <textarea name="description" rows="4" maxlength="3000"></textarea></label>
+      <div class="editorial-actions"><button type="submit" class="primary">Guardar evento</button><button type="reset" class="outline">Nuevo evento</button></div>
+    </form>
+    <ul class="editorial-list" id="editorial-event-list"></ul>
+  </details>
+  <details>
+    <summary>Choferes</summary>
+    <p>Eliminar un chofer retira su perfil y disponibilidad. Podés quitarle el bloqueo si vuelve a estar autorizado.</p>
+    <ul class="editorial-list" id="editorial-driver-list"></ul>
+  </details>
+  <details id="editorial-admins" hidden>
+    <summary>Administradores</summary>
+    <p>Solo el propietario puede dar o quitar acceso administrativo.</p>
+    <form class="editorial-form" id="admin-form">
+      <label>Correo de Google <input name="email" type="email" maxlength="254" required></label>
+      <label>Nombre <input name="name" maxlength="100" required></label>
+      <div class="editorial-actions"><button type="submit" class="primary">Guardar administrador</button><button type="reset" class="outline">Nuevo administrador</button></div>
+    </form>
+    <ul class="editorial-list" id="editorial-admin-list"></ul>
+  </details>
 </dialog>
 <div id="toast" role="status"></div><script type="module" src="./app.js"></script></body></html>

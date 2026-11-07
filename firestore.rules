@@ -25,23 +25,100 @@ service cloud.firestore {
       return request.resource.data.keys().hasAll(keys) && request.resource.data.keys().hasOnly(keys);
     }
 
+    function verifiedGoogle() {
+      return googleUser() && request.auth.token.email_verified == true && request.auth.token.email is string;
+    }
+
+    function siteOwner() {
+      return verifiedGoogle() &&
+        get(/databases/$(database)/documents/webAdminConfig/owner).data.uid == request.auth.uid;
+    }
+
+    function siteAdmin() {
+      return verifiedGoogle() && (exists(/databases/$(database)/documents/webAdmins/$(request.auth.token.email.lower())) || siteOwner());
+    }
+
+    function driverAllowed(uid) {
+      return owner(uid) && !exists(/databases/$(database)/documents/webDriverBlocks/$(uid));
+    }
+
+    match /webAdminConfig/owner {
+      allow get: if verifiedGoogle() && resource.data.uid == request.auth.uid;
+    }
+
+    match /webAdmins/{email} {
+      allow get: if siteOwner() || (verifiedGoogle() && request.auth.token.email.lower() == email);
+      allow list, delete: if siteOwner();
+      allow create, update: if siteOwner() && email == email.lower()
+        && textBetween(email, 254) && email.matches('[^ @/]+@[^ @/]+[.][^ @/]+')
+        && validFields(['name']) && textBetween(request.resource.data.name, 100);
+    }
+
+    match /webDriverBlocks/{uid} {
+      allow get: if owner(uid) || siteAdmin();
+      allow list, delete: if siteAdmin();
+      allow create, update: if siteAdmin() && validFields(['name']) && textBetween(request.resource.data.name, 70);
+    }
+
+    match /webBlogPosts/{id} {
+      allow get, list: if resource.data.published == true || siteAdmin();
+      allow create, update: if siteAdmin() && validFields(['title', 'summary', 'body', 'published', 'updatedAt'])
+        && textBetween(request.resource.data.title, 120) && textBetween(request.resource.data.summary, 280)
+        && textBetween(request.resource.data.body, 15000) && request.resource.data.published is bool
+        && request.resource.data.updatedAt is int && request.resource.data.updatedAt <= nowMillis() + 300000;
+      allow delete: if siteAdmin();
+    }
+
+    match /webCalendarEvents/{id} {
+      allow read: if true;
+      allow create, update: if siteAdmin() && validFields(['title', 'date', 'time', 'location', 'description'])
+        && textBetween(request.resource.data.title, 120)
+        && request.resource.data.date is string
+        && request.resource.data.date.matches('[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])')
+        && request.resource.data.time is string
+        && (request.resource.data.time == '' || request.resource.data.time.matches('([01][0-9]|2[0-3]):[0-5][0-9]'))
+        && request.resource.data.location is string && request.resource.data.location.size() <= 140
+        && request.resource.data.description is string && request.resource.data.description.size() <= 3000;
+      allow delete: if siteAdmin();
+    }
+
+    // The mobile agenda and the backoffice store events intended for public display.
+    match /events/{id} {
+      allow read: if true;
+    }
+
+    match /calendarEvents/{id} {
+      allow read: if true;
+    }
+
+    match /users/{uid} {
+      allow get: if owner(uid);
+      allow create, update: if owner(uid)
+        && (resource == null ? request.resource.data.keys().hasOnly(['uid', 'displayName', 'email', 'photoURL', 'provider', 'lastLoginAt'])
+          : request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid', 'displayName', 'email', 'photoURL', 'provider', 'lastLoginAt']))
+        && request.resource.data.uid == uid && request.resource.data.email == request.auth.token.email
+        && request.resource.data.provider == 'google';
+    }
+
+
     match /webDriverProfiles/{uid} {
       allow get: if owner(uid) || (googleUser() &&
         get(/databases/$(database)/documents/webAvailableDrivers/$(uid)).data.expiresAt > nowMillis());
-      allow create, update: if owner(uid) && validFields(['name', 'phone'])
+      allow list, delete: if siteAdmin();
+      allow create, update: if driverAllowed(uid) && validFields(['name', 'phone'])
         && textBetween(request.resource.data.name, 70) && validPhone(request.resource.data.phone);
     }
 
     match /webAvailableDrivers/{uid} {
       allow get: if owner(uid) || (googleUser() && resource.data.expiresAt > nowMillis());
       allow list: if googleUser() && request.query.limit <= 50;
-      allow create, update: if owner(uid) && validFields(['name', 'expiresAt'])
+      allow create, update: if driverAllowed(uid) && validFields(['name', 'expiresAt'])
         && textBetween(request.resource.data.name, 70)
         && getAfter(/databases/$(database)/documents/webDriverProfiles/$(uid)).data.name == request.resource.data.name
         && request.resource.data.expiresAt is int
         && request.resource.data.expiresAt > nowMillis()
         && request.resource.data.expiresAt <= nowMillis() + 29100000;
-      allow delete: if owner(uid);
+      allow delete: if owner(uid) || siteAdmin();
     }
 
     match /webPlannedTrips/{tripId} {
@@ -67,8 +144,9 @@ service cloud.firestore {
 
     // Preserve the existing mobile rules outside the new rides collections.
     match /{collection}/{document=**} {
-      allow read, write: if request.auth != null &&
-        !(collection in ['webDriverProfiles', 'webAvailableDrivers', 'webPlannedTrips', 'webTripContacts']);
+      allow read, write: if request.auth != null && !googleUser() &&
+        !(collection in ['webDriverProfiles', 'webAvailableDrivers', 'webPlannedTrips', 'webTripContacts',
+          'webAdminConfig', 'webAdmins', 'webDriverBlocks', 'webBlogPosts', 'webCalendarEvents']);
     }
   }
 }

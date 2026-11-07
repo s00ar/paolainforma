@@ -1,3 +1,4 @@
+import { setEditorialSession, connectEditorial } from './editorial.js';
 import { firebaseConfig } from './firebase-config.js';
 import { ridesEnabled } from './rides-settings.js';
 
@@ -89,7 +90,7 @@ function card(title, text, contact, remove) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'outline';
-  button.textContent = remove ? 'Retirar viaje' : 'Ver WhatsApp';
+  button.textContent = remove ? 'Retirar viaje' : 'Contactar por WhatsApp';
   button.onclick = remove || contact;
   item.append(heading, description, button);
   return item;
@@ -99,6 +100,9 @@ function renderLists() {
   const now = Date.now();
   const active = drivers.filter(driver => driver.expiresAt > now);
   const planned = trips.filter(trip => trip.departure > now);
+  const count = byId('driver-count');
+  count.hidden = active.length === 0;
+  count.textContent = active.length + (active.length === 1 ? ' disponible' : ' disponibles');
   byId('driver-list').replaceChildren(...active.map(driver =>
     card(driver.name, 'Disponible hasta ' + formatDate(driver.expiresAt), () => loadContact(driver.name, 'webDriverProfiles', driver.id))));
   byId('trip-list').replaceChildren(...planned.map(trip => card(
@@ -180,6 +184,11 @@ async function loadContact(title, collection, id) {
 async function openDriverForm() {
   const user = currentUser;
   try {
+    const blocked = await api.getDocFromServer(api.doc(db, 'webDriverBlocks', user.uid));
+    if (blocked.exists()) {
+      toast('Tu perfil de chofer fue retirado. Contactá a la administración si necesitás ayuda.');
+      return;
+    }
     const profile = await api.getDocFromServer(api.doc(db, 'webDriverProfiles', user.uid));
     const listing = await api.getDocFromServer(api.doc(db, 'webAvailableDrivers', user.uid));
     if (currentUser?.uid !== user.uid) return;
@@ -281,10 +290,12 @@ async function initFirebase() {
   const app = appSdk.initializeApp(firebaseConfig);
   auth = authSdk.getAuth(app);
   db = api.getFirestore(app);
+  connectEditorial(api, db);
   const provider = new authSdk.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   authSdk.onAuthStateChanged(auth, user => {
     currentUser = user;
+    setEditorialSession(user);
     login.textContent = user ? 'Mi cuenta' : 'Ingresar';
     googleButton.hidden = Boolean(user);
     logout.hidden = !user;
