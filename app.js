@@ -5,6 +5,8 @@ import { ridesEnabled } from './rides-settings.js';
 const byId = id => document.getElementById(id);
 const authDialog = byId('authDialog');
 const googleButton = byId('googleLogin');
+const authStatus = byId('auth-status');
+byId('auth-retry').onclick = () => location.reload();
 const login = byId('login');
 const logout = byId('logout');
 const menu = byId('menu');
@@ -332,6 +334,7 @@ async function initFirebase() {
     googleButton.hidden = Boolean(user);
     mobilityAuth.forEach(button => { button.hidden = Boolean(user); });
     logout.hidden = !user;
+    authStatus.textContent = user ? 'Sesión iniciada.' : '';
     if (!user) {
       contactRequest++;
       for (const id of ['contact-dialog', 'trip-dialog', 'driver-dialog']) byId(id).close();
@@ -354,10 +357,14 @@ async function initFirebase() {
       const messages = {
         'auth/unauthorized-domain': 'El dominio debe autorizarse en Firebase Authentication.',
         'auth/operation-not-allowed': 'El inicio de sesión con Google aún no está habilitado.',
+        'auth/network-request-failed': 'No se pudo conectar con Google. Revisá tu conexión y volvé a intentar.',
+        'auth/web-storage-unsupported': 'Permití el almacenamiento del navegador para iniciar sesión.',
         'auth/popup-blocked': 'Permití la ventana emergente de Google y volvé a intentar.',
         'auth/popup-closed-by-user': 'Se cerró la ventana de Google. Podés volver a intentar.',
       };
-      toast(messages[error.code] || 'No se pudo iniciar sesión con Google.');
+      const message = messages[error.code] || 'No se pudo iniciar sesión con Google. Revisá la conexión y volvé a intentar.';
+      authStatus.textContent = message;
+      toast(message);
     } finally {
       googleButton.disabled = false;
     }
@@ -371,6 +378,7 @@ async function initFirebase() {
     }
   };
   googleButton.disabled = false;
+  authStatus.textContent = '';
 }
 
 renderLists();
@@ -382,5 +390,7 @@ setInterval(() => {
 }, 15000);
 googleButton.disabled = true;
 initFirebase().catch(() => {
-  googleButton.textContent = 'Acceso con Google no disponible';
+  googleButton.disabled = true;
+  authStatus.textContent = 'No se pudo conectar con Google. Revisá tu conexión y reintentá. Si abriste el sitio desde otra aplicación, probá abrirlo en Safari o Chrome.';
+  byId('auth-retry').hidden = false;
 });
