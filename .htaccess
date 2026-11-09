@@ -1,0 +1,6 @@
+# Revalidate pages and application modules so releases cannot remain stale.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|js|css)$">
+    Header set Cache-Control "no-cache, max-age=0, must-revalidate"
+  </FilesMatch>
+</IfModule>
