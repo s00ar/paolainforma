@@ -1,4 +1,4 @@
-import { editorialEnabled } from './rides-settings.js?v=20261107-6';
+import { editorialEnabled } from './rides-settings.js?v=20261110-1';
 
 const byId = id => document.getElementById(id);
 const el = (tag, text, className) => {

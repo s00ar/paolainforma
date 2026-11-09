@@ -134,12 +134,56 @@ service cloud.firestore {
         get(/databases/$(database)/documents/webPlannedTrips/$(tripId)).data.owner == request.auth.uid;
     }
 
+    match /webJobOffers/{id} {
+      function validJob() {
+        return validFields(['owner', 'title', 'company', 'location', 'description', 'phone', 'createdAt', 'expiresAt'])
+          && textBetween(request.resource.data.title, 120)
+          && textBetween(request.resource.data.company, 100)
+          && textBetween(request.resource.data.location, 100)
+          && textBetween(request.resource.data.description, 3000)
+          && validPhone(request.resource.data.phone)
+          && request.resource.data.createdAt is int && request.resource.data.expiresAt is int;
+      }
+      allow get: if googleUser();
+      allow list: if googleUser() && request.query.limit <= 50;
+      allow create: if owner(request.resource.data.owner) && validJob()
+        && request.resource.data.createdAt >= nowMillis() - 300000
+        && request.resource.data.createdAt <= nowMillis() + 300000
+        && request.resource.data.expiresAt == request.resource.data.createdAt + 2592000000;
+      allow update: if owner(resource.data.owner) && validJob()
+        && request.resource.data.owner == resource.data.owner
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.expiresAt == resource.data.expiresAt;
+      allow delete: if owner(resource.data.owner) || siteAdmin();
+    }
+
+    match /webRentalOffers/{id} {
+      function validRental() {
+        return validFields(['owner', 'title', 'location', 'propertyType', 'rentCents', 'rooms', 'description', 'phone', 'createdAt', 'expiresAt'])
+          && textBetween(request.resource.data.title, 120) && textBetween(request.resource.data.location, 100)
+          && request.resource.data.propertyType in ['departamento', 'casa', 'habitacion']
+          && request.resource.data.rentCents is int && request.resource.data.rentCents >= 100 && request.resource.data.rentCents <= 10000000
+          && request.resource.data.rooms is int && request.resource.data.rooms >= 0 && request.resource.data.rooms <= 30
+          && textBetween(request.resource.data.description, 3000) && validPhone(request.resource.data.phone)
+          && request.resource.data.createdAt is int && request.resource.data.expiresAt is int;
+      }
+      allow get: if googleUser();
+      allow list: if googleUser() && request.query.limit <= 50;
+      allow create: if owner(request.resource.data.owner) && validRental()
+        && request.resource.data.createdAt >= nowMillis() - 300000 && request.resource.data.createdAt <= nowMillis() + 300000
+        && request.resource.data.expiresAt == request.resource.data.createdAt + 2592000000;
+      allow update: if owner(resource.data.owner) && validRental()
+        && request.resource.data.owner == resource.data.owner && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.expiresAt == resource.data.expiresAt;
+      allow delete: if owner(resource.data.owner) || siteAdmin();
+    }
+
     // Preserve the confirmed legacy access for all authenticated mobile/backoffice users.
     // Web roles live only in webAdminConfig/webAdmins, never in the legacy users collection.
     match /{collection}/{document=**} {
       allow read, write: if request.auth != null &&
         !(collection in ['webDriverProfiles', 'webAvailableDrivers', 'webPlannedTrips', 'webTripContacts',
-          'webAdminConfig', 'webAdmins', 'webDriverBlocks', 'webBlogPosts', 'webCalendarEvents']);
+          'webRentalOffers', 'webJobOffers', 'webAdminConfig', 'webAdmins', 'webDriverBlocks', 'webBlogPosts', 'webCalendarEvents']);
     }
   }
 }

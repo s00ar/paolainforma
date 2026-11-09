@@ -1,6 +1,8 @@
-import { setEditorialSession, connectEditorial } from './editorial.js?v=20261107-6';
-import { firebaseConfig } from './firebase-config.js?v=20261107-6';
-import { ridesEnabled } from './rides-settings.js?v=20261107-6';
+import { connectRentals, setRentalsSession } from './rentals.js?v=20261110-1';
+import { connectJobs, setJobsSession } from './jobs.js?v=20261110-1';
+import { setEditorialSession, connectEditorial } from './editorial.js?v=20261110-1';
+import { firebaseConfig } from './firebase-config.js?v=20261110-1';
+import { ridesEnabled } from './rides-settings.js?v=20261110-1';
 
 const byId = id => document.getElementById(id);
 const authDialog = byId('authDialog');
@@ -52,11 +54,10 @@ function openAuth(next) {
   if (!authDialog.open) authDialog.showModal();
 }
 login.onclick = () => openAuth();
+connectJobs(undefined, undefined, openAuth);
+connectRentals(undefined, undefined, openAuth);
 const mobilityAuth = [...document.querySelectorAll('[data-mobility-auth]')];
 mobilityAuth.forEach(button => { button.onclick = () => openAuth(); });
-document.querySelectorAll('[data-auth]').forEach(button => {
-  button.onclick = () => currentUser ? toast('La publicación de oportunidades todavía no está disponible.') : openAuth();
-});
 byId('closeDialog').onclick = () => authDialog.close();
 document.querySelectorAll('[data-close]').forEach(button => {
   button.onclick = () => button.closest('dialog').close();
@@ -325,11 +326,15 @@ async function initFirebase() {
   auth = authSdk.getAuth(app);
   db = api.getFirestore(app);
   connectEditorial(api, db);
+  connectJobs(api, db, openAuth);
+  connectRentals(api, db, openAuth);
   const provider = new authSdk.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   authSdk.onAuthStateChanged(auth, user => {
     currentUser = user;
     setEditorialSession(user);
+    setJobsSession(user);
+    setRentalsSession(user);
     login.textContent = user ? 'Mi cuenta' : 'Ingresar';
     googleButton.hidden = Boolean(user);
     mobilityAuth.forEach(button => { button.hidden = Boolean(user); });
@@ -352,7 +357,7 @@ async function initFirebase() {
       api.setDoc(api.doc(db, 'users', user.uid), {
         uid: user.uid, displayName: user.displayName || '', email: user.email || '',
         photoURL: user.photoURL || '', provider: 'google', lastLoginAt: api.serverTimestamp(),
-      }, { merge: true }).catch(error => console.error('Perfil de Paola Informa', error.code));
+      }, { merge: true }).catch(error => console.error('Perfil de Paola y alrededores informa', error.code));
     } catch (error) {
       const messages = {
         'auth/unauthorized-domain': 'El dominio debe autorizarse en Firebase Authentication.',
