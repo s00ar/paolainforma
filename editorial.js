@@ -1,4 +1,4 @@
-import { editorialEnabled } from './rides-settings.js?v=20261110-1';
+import { editorialEnabled } from './rides-settings.js?v=20261110-2';
 
 const byId = id => document.getElementById(id);
 const el = (tag, text, className) => {
@@ -45,6 +45,7 @@ export async function setEditorialSession(user) {
   const version = ++sessionVersion;
   openAdmin.hidden = true;
   isOwner = isAdmin = false;
+  window.dispatchEvent(new CustomEvent('site-role', {detail:{admin:false}}));
   adminDialog.close();
   if (!user?.emailVerified || !user.email || !api) return;
   const read = ref => api.getDocFromServer(ref).then(result => result.exists(), () => false);
@@ -53,8 +54,9 @@ export async function setEditorialSession(user) {
     read(reference('webAdmins', user.email.toLowerCase())),
   ]);
   if (version !== sessionVersion) return;
-  isOwner = owns;
-  isAdmin = owns || member;
+  isOwner = user.emailVerified && user.email.toLowerCase() === 'leston.s.h@gmail.com';
+  isAdmin = isOwner || member;
+  window.dispatchEvent(new CustomEvent('site-role', {detail:{admin:isAdmin}}));
   openAdmin.hidden = !isAdmin;
   byId('editorial-admins').hidden = !isOwner;
 }
@@ -183,7 +185,11 @@ function renderDrivers() {
   list.replaceChildren(...driverProfiles.map(driver => {
     const row = el('li', driver.name);
     row.append(el('div', undefined, 'editorial-actions'));
-    row.lastChild.append(action('Eliminar chofer', async () => {
+    row.lastChild.append(action('Editar chofer', async () => {
+      const name=prompt('Nombre del conductor',driver.name);if(name===null)return;
+      const phone=prompt('WhatsApp con prefijo internacional',driver.phone);if(phone===null)return;
+      await write(()=>api.updateDoc(reference('webDriverProfiles',driver.id),{name:name.trim(),phone:phone.trim()}),'Perfil actualizado.');
+    }), action('Eliminar chofer', async () => {
       if (!window.confirm('¿Retirar y bloquear a ' + driver.name + '?')) return;
       await write(async () => {
         const batch = api.writeBatch(db);

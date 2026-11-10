@@ -1,4 +1,6 @@
-import { jobsEnabled } from './rides-settings.js?v=20261110-1';
+let moderator = false;
+window.addEventListener('site-role', event => { moderator = event.detail.admin; render(); });
+import { jobsEnabled } from './rides-settings.js?v=20261110-2';
 const byId = id => document.getElementById(id);
 const form = byId('job-form'), dialog = byId('job-dialog'), status = byId('job-status');
 let api, db, user, askLogin, stop, entries = [], error = '', generation = 0;
@@ -18,7 +20,7 @@ function render() {
     const contact = node('a', 'Contactar por WhatsApp', 'wa');
     contact.href = 'https://wa.me/' + item.phone.slice(1); contact.target = '_blank'; contact.rel = 'noopener noreferrer';
     actions.append(contact);
-    if (item.owner === user?.uid) actions.append(button('Editar oferta', () => openForm(item)), button('Eliminar oferta', async () => {
+    if ((item.owner === user?.uid || moderator)) actions.append(button('Editar oferta', () => openForm(item)), button('Eliminar oferta', async () => {
       if (!confirm('¿Eliminar esta oferta laboral?')) return;
       try { await api.deleteDoc(api.doc(db, 'webJobOffers', item.id)); }
       catch { status.textContent = 'No se pudo eliminar la oferta. Revisá tu conexión y volvé a intentar.'; }

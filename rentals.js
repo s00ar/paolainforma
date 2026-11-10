@@ -1,4 +1,6 @@
-import { rentalsEnabled } from './rides-settings.js?v=20261110-1';
+let moderator = false;
+window.addEventListener('site-role', event => { moderator = event.detail.admin; render(); });
+import { rentalsEnabled } from './rides-settings.js?v=20261110-2';
 const byId=id=>document.getElementById(id);
 const form=byId('rental-form'), dialog=byId('rental-dialog'), status=byId('rental-status'), filters=byId('rental-search');
 const money=new Intl.NumberFormat('es-IT',{style:'currency',currency:'EUR'});
@@ -17,7 +19,7 @@ function render(){
  byId('rental-list').replaceChildren(...shown.map(item=>{
   const row=node('li','','rental-card');row.append(node('small',types[item.propertyType]+' · '+item.location),node('h3',item.title),node('p',money.format(item.rentCents/100)+' / mes','rental-price'),node('p',item.rooms===0?'Monoambiente':item.rooms+(item.rooms===1?' dormitorio':' dormitorios')),node('p',item.description,'job-description'));
   const actions=node('div','','job-actions');const contact=node('a','Contactar por WhatsApp','wa');contact.href='https://wa.me/'+item.phone.slice(1);contact.target='_blank';contact.rel='noopener noreferrer';actions.append(contact);
-  if(item.owner===user?.uid)actions.append(action('Editar alquiler',()=>openForm(item)),action('Eliminar alquiler',async()=>{
+  if((item.owner===user?.uid || moderator))actions.append(action('Editar alquiler',()=>openForm(item)),action('Eliminar alquiler',async()=>{
    if(!confirm('¿Eliminar este alquiler?'))return;
    try{await api.deleteDoc(api.doc(db,'webRentalOffers',item.id));}catch{status.textContent='No se pudo eliminar el alquiler. Volvé a intentar.';}
   }));row.append(actions);return row;

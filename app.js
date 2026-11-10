@@ -1,8 +1,10 @@
-import { connectRentals, setRentalsSession } from './rentals.js?v=20261110-1';
-import { connectJobs, setJobsSession } from './jobs.js?v=20261110-1';
-import { setEditorialSession, connectEditorial } from './editorial.js?v=20261110-1';
-import { firebaseConfig } from './firebase-config.js?v=20261110-1';
-import { ridesEnabled } from './rides-settings.js?v=20261110-1';
+import { connectDirectory, setDirectorySession } from './directory.js?v=20261110-2';
+import { connectMarket, setMarketSession } from './market.js?v=20261110-2';
+import { connectRentals, setRentalsSession } from './rentals.js?v=20261110-2';
+import { connectJobs, setJobsSession } from './jobs.js?v=20261110-2';
+import { setEditorialSession, connectEditorial } from './editorial.js?v=20261110-2';
+import { firebaseConfig } from './firebase-config.js?v=20261110-2';
+import { ridesEnabled } from './rides-settings.js?v=20261110-2';
 
 const byId = id => document.getElementById(id);
 const authDialog = byId('authDialog');
@@ -24,6 +26,8 @@ let api, auth, db, currentUser, afterLogin;
 let subscriptions = [];
 let drivers = [], trips = [];
 let driverError = '', tripError = '';
+let siteModerator=false;
+window.addEventListener('site-role',e=>{siteModerator=e.detail.admin;renderLists();});
 let toastTimer;
 let contactRequest = 0;
 
@@ -55,6 +59,7 @@ function openAuth(next) {
 }
 login.onclick = () => openAuth();
 connectJobs(undefined, undefined, openAuth);
+connectMarket(undefined, undefined, openAuth);
 connectRentals(undefined, undefined, openAuth);
 const mobilityAuth = [...document.querySelectorAll('[data-mobility-auth]')];
 mobilityAuth.forEach(button => { button.onclick = () => openAuth(); });
@@ -137,9 +142,17 @@ function renderLists() {
     trip.origin + ' → ' + trip.destination,
     formatDate(trip.departure) + ' (hora de Italia) · ' + trip.seats + (trip.seats === 1 ? ' lugar libre' : ' lugares libres'),
     () => loadContact(trip.origin + ' → ' + trip.destination, 'webTripContacts', trip.id),
-    trip.owner === currentUser?.uid ? () => removeTrip(trip.id) : null,
+    (trip.owner === currentUser?.uid || siteModerator) ? () => removeTrip(trip.id) : null,
   )));
 
+  [...byId('trip-list').children].forEach((row,index)=>{
+    const trip=planned[index];if(trip.owner!==currentUser?.uid&&!siteModerator)return;
+    const edit=document.createElement('button');edit.className='outline';edit.textContent='Editar viaje';
+    edit.onclick=async()=>{try{const contact=await api.getDocFromServer(api.doc(db,'webTripContacts',trip.id));tripForm.reset();tripForm.dataset.editId=trip.id;tripForm.dataset.owner=trip.owner;
+      for(const field of ['origin','destination','seats'])tripForm.elements[field].value=trip[field];
+      const d=new Date(trip.departure);tripForm.elements.departure.value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);tripForm.elements.phone.value=contact.data()?.phone||'';byId('trip-dialog').showModal();
+    }catch{toast('No se pudo abrir el viaje.');}};row.append(edit);
+  });
   const unavailable = !ridesEnabled ? 'El servicio de viajes está pendiente de activación.'
     : !currentUser ? 'Ingresá con Google para consultar y publicar.' : '';
   byId('driver-status').textContent = unavailable || driverError || (active.length ? '' : 'No hay choferes disponibles en este momento.');
@@ -295,9 +308,9 @@ tripForm.onsubmit = event => {
     if (!origin || !destination || !form.has('consent')) throw new Error('Completá los datos y aceptá compartir tu contacto.');
     if (!Number.isFinite(departure) || departure <= Date.now()) throw new Error('Elegí una fecha y hora futuras.');
     if (!Number.isInteger(seats) || seats < 1 || seats > 8) throw new Error('Indicá entre 1 y 8 lugares.');
-    const trip = api.doc(api.collection(db, 'webPlannedTrips'));
+    const trip = tripForm.dataset.editId ? api.doc(db,'webPlannedTrips',tripForm.dataset.editId) : api.doc(api.collection(db, 'webPlannedTrips'));
     const batch = api.writeBatch(db);
-    batch.set(trip, { owner: uid, origin, destination, departure, seats });
+    batch.set(trip, { owner: tripForm.dataset.owner || uid, origin, destination, departure, seats });
     batch.set(api.doc(db, 'webTripContacts', trip.id), { phone });
     await batch.commit();
   }, 'Tu viaje quedó publicado.');
@@ -326,7 +339,9 @@ async function initFirebase() {
   auth = authSdk.getAuth(app);
   db = api.getFirestore(app);
   connectEditorial(api, db);
+  connectDirectory(api, db);
   connectJobs(api, db, openAuth);
+  connectMarket(api, db, openAuth);
   connectRentals(api, db, openAuth);
   const provider = new authSdk.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
@@ -334,7 +349,9 @@ async function initFirebase() {
     currentUser = user;
     setEditorialSession(user);
     setJobsSession(user);
+    setMarketSession(user);
     setRentalsSession(user);
+    setDirectorySession(user);
     login.textContent = user ? 'Mi cuenta' : 'Ingresar';
     googleButton.hidden = Boolean(user);
     mobilityAuth.forEach(button => { button.hidden = Boolean(user); });

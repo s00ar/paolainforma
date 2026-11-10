@@ -7,3 +7,8 @@ export const jobsEnabled = true;
 
 // Activate after publishing rules for webRentalOffers.
 export const rentalsEnabled = false;
+
+// Enable after publishing the marketplace ownership rules.
+export const marketEnabled = false;
+
+export const directoryEnabled = false;

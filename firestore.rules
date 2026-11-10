@@ -31,7 +31,7 @@ service cloud.firestore {
 
     function siteOwner() {
       return verifiedGoogle() &&
-        get(/databases/$(database)/documents/webAdminConfig/owner).data.uid == request.auth.uid;
+        request.auth.token.email.lower() == 'leston.s.h@gmail.com';
     }
 
     function siteAdmin() {
@@ -94,10 +94,10 @@ service cloud.firestore {
 
 
     match /webDriverProfiles/{uid} {
-      allow get: if owner(uid) || (googleUser() &&
-        get(/databases/$(database)/documents/webAvailableDrivers/$(uid)).data.expiresAt > nowMillis());
-      allow list, delete: if siteAdmin();
-      allow create, update: if driverAllowed(uid) && validFields(['name', 'phone'])
+      allow get: if googleUser();
+      allow list: if googleUser();
+      allow delete: if owner(uid) || siteAdmin();
+      allow create, update: if (driverAllowed(uid) || siteAdmin()) && validFields(['name', 'phone'])
         && textBetween(request.resource.data.name, 70) && validPhone(request.resource.data.phone);
     }
 
@@ -122,7 +122,13 @@ service cloud.firestore {
         && textBetween(request.resource.data.destination, 80)
         && request.resource.data.departure is int && request.resource.data.departure > nowMillis()
         && request.resource.data.seats is int && request.resource.data.seats >= 1 && request.resource.data.seats <= 8;
-      allow delete: if owner(resource.data.owner);
+      allow update: if (owner(resource.data.owner) || siteAdmin()) && request.resource.data.owner == resource.data.owner
+        && validFields(['owner', 'origin', 'destination', 'departure', 'seats'])
+        && textBetween(request.resource.data.origin, 80)
+        && textBetween(request.resource.data.destination, 80)
+        && request.resource.data.departure is int && request.resource.data.departure > nowMillis()
+        && request.resource.data.seats is int && request.resource.data.seats >= 1 && request.resource.data.seats <= 8;
+      allow delete: if owner(resource.data.owner) || siteAdmin();
     }
 
     match /webTripContacts/{tripId} {
@@ -130,8 +136,21 @@ service cloud.firestore {
         get(/databases/$(database)/documents/webPlannedTrips/$(tripId)).data.departure > nowMillis();
       allow create: if googleUser() && validFields(['phone']) && validPhone(request.resource.data.phone)
         && getAfter(/databases/$(database)/documents/webPlannedTrips/$(tripId)).data.owner == request.auth.uid;
-      allow delete: if googleUser() &&
-        get(/databases/$(database)/documents/webPlannedTrips/$(tripId)).data.owner == request.auth.uid;
+      allow update: if validFields(['phone']) && validPhone(request.resource.data.phone) && (siteAdmin() || owner(get(/databases/$(database)/documents/webPlannedTrips/$(tripId)).data.owner));
+      allow delete: if siteAdmin() || owner(get(/databases/$(database)/documents/webPlannedTrips/$(tripId)).data.owner);
+    }
+
+    match /webDriverReviews/{driverId}/reviews/{authorId} {
+      function validReview() {
+        return validFields(['rating', 'text']) && request.resource.data.rating is int
+          && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+          && textBetween(request.resource.data.text, 500);
+      }
+      allow read: if googleUser();
+      allow create: if owner(authorId) && authorId != driverId && validReview()
+        && exists(/databases/$(database)/documents/webDriverProfiles/$(driverId));
+      allow update: if (owner(authorId) || siteAdmin()) && validReview();
+      allow delete: if owner(authorId) || siteAdmin();
     }
 
     match /webJobOffers/{id} {
@@ -150,7 +169,30 @@ service cloud.firestore {
         && request.resource.data.createdAt >= nowMillis() - 300000
         && request.resource.data.createdAt <= nowMillis() + 300000
         && request.resource.data.expiresAt == request.resource.data.createdAt + 2592000000;
-      allow update: if owner(resource.data.owner) && validJob()
+      allow update: if (owner(resource.data.owner) || siteAdmin()) && validJob()
+        && request.resource.data.owner == resource.data.owner
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.expiresAt == resource.data.expiresAt;
+      allow delete: if owner(resource.data.owner) || siteAdmin();
+    }
+
+    match /webMarketOffers/{id} {
+      function validProduct() {
+        return validFields(['owner', 'title', 'price', 'location', 'description', 'phone', 'createdAt', 'expiresAt'])
+          && textBetween(request.resource.data.title, 120)
+          && request.resource.data.price is string && request.resource.data.price.matches('[0-9]{1,7}([.][0-9]{1,2})?')
+          && textBetween(request.resource.data.location, 100)
+          && textBetween(request.resource.data.description, 3000)
+          && validPhone(request.resource.data.phone)
+          && request.resource.data.createdAt is int && request.resource.data.expiresAt is int;
+      }
+      allow get: if googleUser();
+      allow list: if googleUser() && request.query.limit <= 50;
+      allow create: if owner(request.resource.data.owner) && validProduct()
+        && request.resource.data.createdAt >= nowMillis() - 300000
+        && request.resource.data.createdAt <= nowMillis() + 300000
+        && request.resource.data.expiresAt == request.resource.data.createdAt + 2592000000;
+      allow update: if (owner(resource.data.owner) || siteAdmin()) && validProduct()
         && request.resource.data.owner == resource.data.owner
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.expiresAt == resource.data.expiresAt;
@@ -172,7 +214,7 @@ service cloud.firestore {
       allow create: if owner(request.resource.data.owner) && validRental()
         && request.resource.data.createdAt >= nowMillis() - 300000 && request.resource.data.createdAt <= nowMillis() + 300000
         && request.resource.data.expiresAt == request.resource.data.createdAt + 2592000000;
-      allow update: if owner(resource.data.owner) && validRental()
+      allow update: if (owner(resource.data.owner) || siteAdmin()) && validRental()
         && request.resource.data.owner == resource.data.owner && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.expiresAt == resource.data.expiresAt;
       allow delete: if owner(resource.data.owner) || siteAdmin();
@@ -183,7 +225,7 @@ service cloud.firestore {
     match /{collection}/{document=**} {
       allow read, write: if request.auth != null &&
         !(collection in ['webDriverProfiles', 'webAvailableDrivers', 'webPlannedTrips', 'webTripContacts',
-          'webRentalOffers', 'webJobOffers', 'webAdminConfig', 'webAdmins', 'webDriverBlocks', 'webBlogPosts', 'webCalendarEvents']);
+          'webDriverReviews', 'webMarketOffers', 'webRentalOffers', 'webJobOffers', 'webAdminConfig', 'webAdmins', 'webDriverBlocks', 'webBlogPosts', 'webCalendarEvents']);
     }
   }
 }
