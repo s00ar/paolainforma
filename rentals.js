@@ -1,6 +1,6 @@
 let moderator = false;
 window.addEventListener('site-role', event => { moderator = event.detail.admin; render(); });
-import { rentalsEnabled } from './rides-settings.js?v=20261110-2';
+import { rentalsEnabled } from './rides-settings.js?v=20261110-3';
 const byId=id=>document.getElementById(id);
 const form=byId('rental-form'), dialog=byId('rental-dialog'), status=byId('rental-status'), filters=byId('rental-search');
 const money=new Intl.NumberFormat('es-IT',{style:'currency',currency:'EUR'});

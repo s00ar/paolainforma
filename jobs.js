@@ -1,6 +1,6 @@
 let moderator = false;
 window.addEventListener('site-role', event => { moderator = event.detail.admin; render(); });
-import { jobsEnabled } from './rides-settings.js?v=20261110-2';
+import { jobsEnabled } from './rides-settings.js?v=20261110-3';
 const byId = id => document.getElementById(id);
 const form = byId('job-form'), dialog = byId('job-dialog'), status = byId('job-status');
 let api, db, user, askLogin, stop, entries = [], error = '', generation = 0;

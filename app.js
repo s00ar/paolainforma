@@ -1,10 +1,10 @@
-import { connectDirectory, setDirectorySession } from './directory.js?v=20261110-2';
-import { connectMarket, setMarketSession } from './market.js?v=20261110-2';
-import { connectRentals, setRentalsSession } from './rentals.js?v=20261110-2';
-import { connectJobs, setJobsSession } from './jobs.js?v=20261110-2';
-import { setEditorialSession, connectEditorial } from './editorial.js?v=20261110-2';
-import { firebaseConfig } from './firebase-config.js?v=20261110-2';
-import { ridesEnabled } from './rides-settings.js?v=20261110-2';
+import { connectDirectory, setDirectorySession } from './directory.js?v=20261110-3';
+import { connectMarket, setMarketSession } from './market.js?v=20261110-3';
+import { connectRentals, setRentalsSession } from './rentals.js?v=20261110-3';
+import { connectJobs, setJobsSession } from './jobs.js?v=20261110-3';
+import { setEditorialSession, connectEditorial } from './editorial.js?v=20261110-3';
+import { firebaseConfig } from './firebase-config.js?v=20261110-3';
+import { ridesEnabled } from './rides-settings.js?v=20261110-3';
 
 const byId = id => document.getElementById(id);
 const authDialog = byId('authDialog');
