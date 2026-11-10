@@ -1,0 +1,12 @@
+<dialog id="rental-dialog" aria-labelledby="rental-dialog-title"><form id="rental-form" class="ride-form">
+<button type="button" class="close" data-close aria-label="Cerrar">×</button><h2 id="rental-dialog-title">Publicar un alquiler</h2>
+<label>Título<input name="title" required maxlength="120" placeholder="Departamento de dos ambientes"></label>
+<label>Localidad<input name="location" required maxlength="100" placeholder="Paola"></label>
+<label>Tipo<select name="propertyType" required><option value="departamento">Departamento</option><option value="casa">Casa</option><option value="habitacion">Habitación</option></select></label>
+<label>Alquiler mensual (€)<input name="rent" type="number" min="1" max="100000" step="0.01" required inputmode="decimal"></label>
+<label>Dormitorios<input name="rooms" type="number" min="0" max="30" step="1" value="1" required><small>Indicá 0 si es un monoambiente.</small></label>
+<label>Descripción y condiciones<textarea name="description" required maxlength="3000" rows="5" placeholder="Disponibilidad, depósito, gastos incluidos y condiciones del alquiler"></textarea></label>
+<label>WhatsApp con prefijo internacional<input name="phone" type="tel" required maxlength="25" autocomplete="tel" placeholder="+39 …"></label>
+<label class="ride-consent"><input name="consent" type="checkbox" required> Tengo autorización para publicar esta propiedad y acepto compartir mi WhatsApp con usuarios con sesión.</label>
+<p>El aviso permanece visible durante 30 días. Podés editarlo o eliminarlo antes.</p><p class="form-status" role="status"></p><button type="submit" class="primary">Guardar alquiler</button>
+</form></dialog>

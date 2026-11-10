@@ -1,4 +1,4 @@
-import { directoryEnabled } from './rides-settings.js?v=20261110-3';
+import { directoryEnabled } from './rides-settings.js?v=20261110-4';
 let api,db,user,admin=false,profiles=[],availability=[],stops=[],reviewStops=new Map(),reviews=new Map();
 const node=(tag,text,cls)=>{const e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;return e;};
 const button=(text,run)=>{const b=node('button',text,'outline');b.type='button';b.onclick=run;return b;};

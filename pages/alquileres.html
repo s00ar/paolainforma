@@ -1,0 +1,9 @@
+<section class="section rental-section" id="alquileres" aria-labelledby="rentals-title">
+<div class="section-head"><div><span class="eyebrow">VIVIR EN LA ZONA</span><h2 id="rentals-title">Alquileres en Paola y alrededores</h2><p>Buscá una vivienda o publicá tu propiedad. Coordiná los detalles directamente con quien publica.</p></div><button class="primary" id="publish-rental" type="button">Publicar un alquiler</button></div>
+<form id="rental-search" class="rental-filters" role="search" aria-label="Buscar alquileres">
+<label>Localidad o palabra clave<input type="search" name="query" placeholder="Paola, departamento…"></label>
+<label>Tipo de propiedad<select name="type"><option value="">Todos</option><option value="departamento">Departamento</option><option value="casa">Casa</option><option value="habitacion">Habitación</option></select></label>
+<label>Máximo mensual (€)<input type="number" name="maxRent" min="0" step="1" placeholder="Sin límite"></label><button class="outline" type="reset">Limpiar filtros</button>
+</form>
+<p id="rental-status" role="status">Cargando alquileres…</p><button class="outline" id="rentals-login" type="button">Ingresar con Google</button><ul id="rental-list" class="rental-list"></ul>
+</section>

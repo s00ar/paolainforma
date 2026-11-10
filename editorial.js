@@ -1,4 +1,4 @@
-import { editorialEnabled } from './rides-settings.js?v=20261110-3';
+import { editorialEnabled } from './rides-settings.js?v=20261110-4';
 
 const byId = id => document.getElementById(id);
 const el = (tag, text, className) => {
@@ -29,7 +29,7 @@ export function connectEditorial(firestore, database) {
   if (!editorialEnabled) return;
   api = firestore;
   db = database;
-  api.onSnapshot(api.query(api.collection(db, 'webBlogPosts'), api.where('published', '==', true)), snapshot => {
+  if (byId('blog-posts')) api.onSnapshot(api.query(api.collection(db, 'webBlogPosts'), api.where('published', '==', true)), snapshot => {
     const posts = rows(snapshot).sort((a, b) => b.updatedAt - a.updatedAt);
     byId('blog-posts').replaceChildren(...posts.map(post => {
       const card = el('article', undefined, 'news-card card-copy');

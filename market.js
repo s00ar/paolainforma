@@ -1,6 +1,6 @@
 let moderator = false;
 window.addEventListener('site-role', event => { moderator = event.detail.admin; render(); });
-import { marketEnabled } from './rides-settings.js?v=20261110-3';
+import { marketEnabled } from './rides-settings.js?v=20261110-4';
 const byId = id => document.getElementById(id);
 const form = byId('market-form'), dialog = byId('market-dialog'), status = byId('market-status');
 let api, db, user, askLogin, stop, entries = [], error = '', generation = 0;

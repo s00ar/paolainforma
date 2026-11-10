@@ -17,3 +17,11 @@ La configuración pública del cliente está en firebase-config.js. Google neces
 Los indicadores de rides-settings.js controlan las funciones que requieren reglas de Firestore verificadas. No activarlos sin comprobar las reglas del proyecto compartido. Ver VIAJES.md y ADMINISTRACION.md para la activación.
 
 No almacenar claves privadas ni credenciales administrativas en el sitio.
+
+## Páginas y navegación
+
+Cada sección del menú tiene su propio HTML: noticias, calendario, mapa, viajes, tienda, trabajo, alquileres y contactos. La portada ofrece accesos a todas ellas. Las políticas y el artículo de Ripopola también conservan páginas propias.
+
+El contenido editable de las páginas está en `pages/`; el encabezado, pie, iconos y diálogos de cuenta compartidos están en `shared/`. Ejecutar `npm run build` regenera los HTML de la raíz y la salida de `dist/`. Hostinger despliega la raíz del repositorio: incluir los HTML generados al guardar cambios.
+
+`app.js` comparte navegación y autenticación y carga solo los módulos de la página actual. `rides.js` contiene la lógica de Viajes. `pages.css` define la tipografía y el diseño común. `legacy-links.js` redirige los enlaces antiguos de la portada a sus nuevas páginas.

@@ -1,0 +1,16 @@
+import {readFile,writeFile} from 'node:fs/promises';
+const root=new URL('.',import.meta.url);const read=name=>readFile(new URL(name,root),'utf8');
+const routes={noticias:'noticias.html',agenda:'calendario.html',mapa:'mapa.html',viajes:'viajes.html',tienda:'tienda.html',trabajo:'trabajo.html',alquileres:'alquileres.html',politicas:'politicas.html',inicio:'index.html', 'san-martino-2026':'noticias.html#san-martino-2026','conductores-activos':'viajes.html#conductores-activos'};
+const links=html=>html.replace(/href="(?:\.\/)?#([\w-]+)"/g,(all,id)=>routes[id]?`href="./${routes[id]}"`:all).replaceAll('Las publicacións','Las publicaciones');
+const definitions=[['index','Inicio','inicio'],['noticias','Noticias','noticias'],['calendario','Agenda','calendario'],['mapa','Mapa','mapa'],['viajes','Viajes compartidos','viajes'],['tienda','Tienda','tienda'],['trabajo','Trabajo','trabajo'],['alquileres','Alquileres','alquileres'],['contactos','Contactos útiles','contactos'],['politicas','Políticas y condiciones','politicas'],['ripopola-calabria','Ripopola Calabria','ripopola-calabria']];
+const [header,footer,icons,account]=await Promise.all(['header','footer','icons','account'].map(name=>read('shared/'+name+'.html')));
+for(const [file,title,content] of definitions){
+ let body=links(await read('pages/'+content+'.html'));
+ if(file!=='index'&&!/<h1\b/.test(body))body=`<div class="page-heading"><a href="./">Inicio</a><span aria-hidden="true"> / </span><span>${title}</span><h1>${title}</h1></div>`+body;
+ let dialogs='';try{dialogs=await read('pages/'+content+'-dialogs.html');}catch{}
+ let nav=links(header).replace('href="./'+file+'.html"','href="./'+file+'.html" aria-current="page"');
+ if(file==='ripopola-calabria')nav=nav.replace('href="./noticias.html"','href="./noticias.html" aria-current="page"');
+ const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#1D70B8"><title>${file==='index'?'Paola y alrededores informa':title+' · Paola y alrededores informa'}</title><meta name="description" content="${title}: información y recursos de Paola y alrededores."><meta property="og:site_name" content="Paola y alrededores informa"><meta property="og:image" content="./assets/og-image.png"><link rel="canonical" href="https://paolainforma.pixvo.tech/${file==='index'?'':file+'.html'}"><link rel="icon" href="./assets/favicon.ico"><link rel="stylesheet" href="./styles.css?v=20261110-4"><link rel="stylesheet" href="./rides.css?v=20261110-4"><link rel="stylesheet" href="./pages.css?v=20261110-4">${file==='index'?'<script src="./legacy-links.js?v=20261110-4"></script>':''}</head><body class="site-page page-${file}"><a class="skip-link" href="#contenido">Saltar al contenido</a>${icons}${nav}<main id="contenido" tabindex="-1">${body}</main>${links(footer)}${links(account)}${links(dialogs)}<script type="module" src="./app.js?v=20261110-4"></script>${file==='calendario'?'<script type="module" src="./calendar.js?v=20261110-4"></script>':''}</body></html>`;
+ await writeFile(new URL(file+'.html',root),html);
+}
+console.log('Páginas generadas: '+definitions.map(([file])=>file+'.html').join(', '));

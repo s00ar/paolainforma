@@ -1,0 +1,30 @@
+<dialog id="driver-dialog" aria-labelledby="driver-title"><form id="driver-form" class="ride-form">
+  <button type="button" class="close" data-close aria-label="Cerrar">×</button>
+  <h2 id="driver-title">Mi disponibilidad</h2>
+  <p id="my-driver-status"></p>
+  <label>Nombre visible <input name="name" required maxlength="70" autocomplete="name"></label>
+  <label>WhatsApp con prefijo internacional <input name="phone" type="tel" autocomplete="tel" required maxlength="25" placeholder="+39 …"></label>
+  <label>Disponible durante <select name="hours"><option value="1">1 hora</option><option value="2">2 horas</option><option value="4">4 horas</option><option value="8">8 horas</option></select></label>
+  <label class="ride-consent"><input name="consent" type="checkbox" required> Soy chofer de Remis y acepto que otros usuarios con sesión puedan ver mi WhatsApp en mi perfil de conductor, que permanece registrado aunque no esté disponible.</label>
+  <p class="form-status" role="status"></p>
+  <button type="submit" class="primary">Marcarme disponible</button>
+  <button type="button" class="outline" id="stop-driver" hidden>Dejar de estar disponible</button>
+</form></dialog>
+<dialog id="trip-dialog" aria-labelledby="trip-title"><form id="trip-form" class="ride-form">
+  <button type="button" class="close" data-close aria-label="Cerrar">×</button>
+  <h2 id="trip-title">Publicar un viaje</h2>
+  <label>Origen <input name="origin" required maxlength="80" placeholder="Paola"></label>
+  <label>Destino <input name="destination" required maxlength="80" placeholder="Cosenza"></label>
+  <label>Salida, hora de tu dispositivo <input name="departure" type="datetime-local" required></label>
+  <label>Lugares libres <input name="seats" type="number" inputmode="numeric" required min="1" max="8" value="1"></label>
+  <label>WhatsApp con prefijo internacional <input name="phone" type="tel" autocomplete="tel" required maxlength="25" placeholder="+39 …"></label>
+  <label class="ride-consent"><input name="consent" type="checkbox" required> Acepto compartir mi WhatsApp con usuarios con sesión que consulten este viaje.</label>
+  <p class="form-status" role="status"></p>
+  <button type="submit" class="primary">Publicar viaje</button>
+</form></dialog>
+<dialog id="contact-dialog" aria-labelledby="contact-title">
+  <button type="button" class="close" data-close aria-label="Cerrar">×</button>
+  <h2 id="contact-title"></h2>
+  <p id="contact-status" role="status"></p>
+  <a id="contact-link" class="wa" target="_blank" rel="noopener noreferrer" hidden>Abrir WhatsApp ↗</a>
+</dialog>

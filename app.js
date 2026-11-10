@@ -1,11 +1,9 @@
-import { connectDirectory, setDirectorySession } from './directory.js?v=20261110-3';
-import { connectMarket, setMarketSession } from './market.js?v=20261110-3';
-import { connectRentals, setRentalsSession } from './rentals.js?v=20261110-3';
-import { connectJobs, setJobsSession } from './jobs.js?v=20261110-3';
-import { setEditorialSession, connectEditorial } from './editorial.js?v=20261110-3';
-import { firebaseConfig } from './firebase-config.js?v=20261110-3';
-import { ridesEnabled } from './rides-settings.js?v=20261110-3';
-
+import {firebaseConfig} from './firebase-config.js?v=20261110-4';
+import {connectEditorial,setEditorialSession} from './editorial.js?v=20261110-4';
+const jobs=document.getElementById('trabajo')?await import('./jobs.js?v=20261110-4'):null;
+const market=document.getElementById('tienda')?await import('./market.js?v=20261110-4'):null;
+const rentals=document.getElementById('alquileres')?await import('./rentals.js?v=20261110-4'):null;
+const directory=document.getElementById('viajes')?await import('./directory.js?v=20261110-4'):null;
 const byId = id => document.getElementById(id);
 const authDialog = byId('authDialog');
 const googleButton = byId('googleLogin');
@@ -15,22 +13,8 @@ const login = byId('login');
 const logout = byId('logout');
 const menu = byId('menu');
 const nav = byId('nav');
-const driverForm = byId('driver-form');
-const tripForm = byId('trip-form');
-const stopDriver = byId('stop-driver');
-const hour = 3600000;
-const dateFormat = new Intl.DateTimeFormat('es-IT', {
-  dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Rome',
-});
-let api, auth, db, currentUser, afterLogin;
-let subscriptions = [];
-let drivers = [], trips = [];
-let driverError = '', tripError = '';
-let siteModerator=false;
-window.addEventListener('site-role',e=>{siteModerator=e.detail.admin;renderLists();});
-let toastTimer;
-let contactRequest = 0;
-
+let api,auth,db,currentUser,afterLogin,toastTimer;
+const state={};
 function toast(message) {
   const element = byId('toast');
   element.textContent = message;
@@ -58,9 +42,10 @@ function openAuth(next) {
   if (!authDialog.open) authDialog.showModal();
 }
 login.onclick = () => openAuth();
-connectJobs(undefined, undefined, openAuth);
-connectMarket(undefined, undefined, openAuth);
-connectRentals(undefined, undefined, openAuth);
+jobs?.connectJobs(undefined, undefined, openAuth);
+market?.connectMarket(undefined, undefined, openAuth);
+rentals?.connectRentals(undefined, undefined, openAuth);
+const rides=document.getElementById('viajes')?(await import('./rides.js?v=20261110-4')).setupRides(state,openAuth,toast):null;
 const mobilityAuth = [...document.querySelectorAll('[data-mobility-auth]')];
 mobilityAuth.forEach(button => { button.onclick = () => openAuth(); });
 byId('closeDialog').onclick = () => authDialog.close();
@@ -70,263 +55,6 @@ document.querySelectorAll('[data-close]').forEach(button => {
 authDialog.addEventListener('close', () => {
   if (!authDialog.open) afterLogin = undefined;
 });
-
-function requireRides(action) {
-  if (!ridesEnabled) {
-    toast('Los viajes compartidos estarán disponibles cuando se habilite el servicio.');
-    return;
-  }
-  if (!currentUser) openAuth(action);
-  else action();
-}
-
-function phoneNumber(value) {
-  const phone = value.trim().replace(/[\s().-]/g, '');
-  if (!/^\+[1-9]\d{7,14}$/.test(phone)) throw new Error('Ingresá un número internacional, por ejemplo +39 seguido del número.');
-  return phone;
-}
-
-function formatDate(timestamp) {
-  return dateFormat.format(timestamp);
-}
-
-function card(title, text, contact, remove, driver = false) {
-  const item = document.createElement('li');
-  item.className = 'ride-item';
-  const heading = document.createElement('h4');
-  heading.textContent = title;
-  const description = document.createElement('p');
-  description.textContent = text;
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'outline';
-  button.textContent = remove ? 'Retirar viaje' : 'Contactar por WhatsApp';
-  button.onclick = remove || contact;
-  if (driver) {
-    item.classList.add('mobility-driver-row');
-    const icon = document.createElement('span');
-    icon.className = 'mobility-car';
-    icon.textContent = title.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('').toUpperCase();
-    icon.setAttribute('aria-hidden', 'true');
-    const details = document.createElement('div');
-    details.className = 'mobility-driver-details';
-    details.append(heading, description);
-    const badge = document.createElement('span');
-    badge.className = 'mobility-badge';
-    badge.textContent = 'Disponible ahora';
-    button.className = 'mobility-whatsapp';
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('class', 'mobility-icon mobility-whatsapp-icon');
-    svg.setAttribute('viewBox', '0 0 16 16');
-    svg.setAttribute('aria-hidden', 'true');
-    svg.setAttribute('focusable', 'false');
-    const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
-    use.setAttribute('href', '#mobility-whatsapp-symbol');
-    svg.append(use);
-    button.prepend(svg);
-    item.append(icon, details, badge, button);
-  } else item.append(heading, description, button);
-  return item;
-}
-
-function renderLists() {
-  const now = Date.now();
-  const active = drivers.filter(driver => driver.expiresAt > now);
-  const planned = trips.filter(trip => trip.departure > now);
-  const count = byId('driver-count');
-  count.hidden = !ridesEnabled || !currentUser || Boolean(driverError);
-  count.textContent = active.length + (active.length === 1 ? ' disponible' : ' disponibles');
-  byId('driver-list').replaceChildren(...active.map(driver =>
-    card(driver.name, 'Disponible hasta ' + formatDate(driver.expiresAt), () => loadContact(driver.name, 'webDriverProfiles', driver.id), null, true)));
-  byId('trip-list').replaceChildren(...planned.map(trip => card(
-    trip.origin + ' → ' + trip.destination,
-    formatDate(trip.departure) + ' (hora de Italia) · ' + trip.seats + (trip.seats === 1 ? ' lugar libre' : ' lugares libres'),
-    () => loadContact(trip.origin + ' → ' + trip.destination, 'webTripContacts', trip.id),
-    (trip.owner === currentUser?.uid || siteModerator) ? () => removeTrip(trip.id) : null,
-  )));
-
-  [...byId('trip-list').children].forEach((row,index)=>{
-    const trip=planned[index];if(trip.owner!==currentUser?.uid&&!siteModerator)return;
-    const edit=document.createElement('button');edit.className='outline';edit.textContent='Editar viaje';
-    edit.onclick=async()=>{try{const contact=await api.getDocFromServer(api.doc(db,'webTripContacts',trip.id));tripForm.reset();tripForm.dataset.editId=trip.id;tripForm.dataset.owner=trip.owner;
-      for(const field of ['origin','destination','seats'])tripForm.elements[field].value=trip[field];
-      const d=new Date(trip.departure);tripForm.elements.departure.value=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);tripForm.elements.phone.value=contact.data()?.phone||'';byId('trip-dialog').showModal();
-    }catch{toast('No se pudo abrir el viaje.');}};row.append(edit);
-  });
-  const unavailable = !ridesEnabled ? 'El servicio de viajes está pendiente de activación.'
-    : !currentUser ? 'Ingresá con Google para consultar y publicar.' : '';
-  byId('driver-status').textContent = unavailable || driverError || (active.length ? '' : 'No hay choferes disponibles en este momento.');
-  byId('trip-status').textContent = unavailable || tripError || (planned.length ? '' : 'No hay viajes programados.');
-  for (const [kind, error, entries] of [['driver', driverError, active], ['trip', tripError, planned]]) {
-    const state = unavailable ? 'unavailable' : error.startsWith('Cargando') ? 'loading'
-      : error ? 'error' : entries.length ? 'ready' : 'empty';
-    byId(kind + '-status').dataset.state = state;
-    byId(kind + '-list').setAttribute('aria-busy', String(state === 'loading'));
-    if (kind === 'driver') byId('conductores-activos').dataset.state = state;
-  }
-}
-
-function observeLists() {
-  subscriptions.forEach(unsubscribe => unsubscribe());
-  subscriptions = [];
-  drivers = [];
-  trips = [];
-  driverError = tripError = '';
-  if (currentUser && ridesEnabled) {
-    driverError = 'Cargando disponibilidad…';
-    tripError = 'Cargando viajes…';
-    const upcoming = (name, field) => api.query(api.collection(db, name),
-      api.where(field, '>', Date.now()), api.orderBy(field), api.limit(50));
-    const rows = snapshot => snapshot.docs.map(row => ({ ...row.data(), id: row.id }));
-    subscriptions = [
-      api.onSnapshot(upcoming('webAvailableDrivers', 'expiresAt'), snapshot => {
-        drivers = rows(snapshot);
-        driverError = '';
-        renderLists();
-      }, () => {
-        drivers = [];
-        driverError = 'No pudimos consultar los choferes. Volvé a iniciar sesión e intentá de nuevo.';
-        renderLists();
-      }),
-      api.onSnapshot(upcoming('webPlannedTrips', 'departure'), snapshot => {
-        trips = rows(snapshot);
-        tripError = '';
-        renderLists();
-      }, () => {
-        trips = [];
-        tripError = 'No pudimos consultar los viajes. Volvé a iniciar sesión e intentá de nuevo.';
-        renderLists();
-      }),
-    ];
-  }
-  renderLists();
-}
-
-function showContact(title, phone) {
-  const dialog = byId('contact-dialog');
-  const link = byId('contact-link');
-  byId('contact-title').textContent = title;
-  byId('contact-status').textContent = phone || 'Consultando disponibilidad…';
-  link.hidden = !phone;
-  if (phone) link.href = 'https://wa.me/' + phone.slice(1);
-  else link.removeAttribute('href');
-  if (!dialog.open) dialog.showModal();
-}
-
-byId('contact-dialog').addEventListener('close', () => { contactRequest++; });
-
-async function loadContact(title, collection, id) {
-  const request = ++contactRequest;
-  showContact(title);
-  try {
-    const profile = await api.getDocFromServer(api.doc(db, collection, id));
-    if (!profile.exists()) throw new Error();
-    if (request === contactRequest) showContact(title, phoneNumber(profile.data().phone));
-  } catch {
-    if (request === contactRequest) {
-      byId('contact-status').textContent = 'Este contacto ya no está disponible o no se pudo cargar.';
-    }
-  }
-}
-
-async function openDriverForm() {
-  const user = currentUser;
-  try {
-    const blocked = await api.getDocFromServer(api.doc(db, 'webDriverBlocks', user.uid));
-    if (blocked.exists()) {
-      toast('Tu perfil de chofer fue retirado. Contactá a la administración si necesitás ayuda.');
-      return;
-    }
-    const profile = await api.getDocFromServer(api.doc(db, 'webDriverProfiles', user.uid));
-    const listing = await api.getDocFromServer(api.doc(db, 'webAvailableDrivers', user.uid));
-    if (currentUser?.uid !== user.uid) return;
-    const activeUntil = listing.data()?.expiresAt || 0;
-    driverForm.reset();
-    driverForm.elements.name.value = profile.data()?.name || user.displayName || '';
-    driverForm.elements.phone.value = profile.data()?.phone || '';
-    stopDriver.hidden = activeUntil <= Date.now();
-    byId('my-driver-status').textContent = stopDriver.hidden ? 'Ahora no figurás como disponible.'
-      : 'Figurás como disponible hasta ' + formatDate(activeUntil) + '.';
-    driverForm.querySelector('.form-status').textContent = '';
-    byId('driver-dialog').showModal();
-  } catch {
-    toast('No pudimos cargar tu disponibilidad.');
-  }
-}
-
-byId('manage-driver').onclick = () => requireRides(openDriverForm);
-byId('publish-trip').onclick = () => requireRides(() => {
-  tripForm.reset();
-  tripForm.querySelector('.form-status').textContent = '';
-  byId('trip-dialog').showModal();
-});
-
-async function saveForm(form, action, success) {
-  const status = form.querySelector('.form-status');
-  const buttons = [...form.querySelectorAll('button')].filter(button => !button.matches('[data-close]'));
-  if (buttons.some(button => button.disabled) || !currentUser || !ridesEnabled) return;
-  buttons.forEach(button => { button.disabled = true; });
-  status.textContent = 'Guardando…';
-  try {
-    await action(currentUser.uid);
-    form.closest('dialog').close();
-    toast(success);
-  } catch (error) {
-    status.textContent = error.code ? 'No se pudo guardar. Revisá la conexión e intentá de nuevo.' : error.message;
-  } finally {
-    buttons.forEach(button => { button.disabled = false; });
-  }
-}
-
-driverForm.onsubmit = event => {
-  event.preventDefault();
-  saveForm(driverForm, async uid => {
-    const form = new FormData(driverForm);
-    const name = form.get('name').trim();
-    const phone = phoneNumber(form.get('phone'));
-    if (!name || !form.has('consent')) throw new Error('Completá el nombre y confirmá que sos chofer de Remis.');
-    const batch = api.writeBatch(db);
-    batch.set(api.doc(db, 'webDriverProfiles', uid), { name, phone });
-    batch.set(api.doc(db, 'webAvailableDrivers', uid), {
-      name, expiresAt: Date.now() + Number(form.get('hours')) * hour,
-    });
-    await batch.commit();
-  }, 'Ya figurás como disponible.');
-};
-stopDriver.onclick = () => saveForm(driverForm, uid =>
-  api.deleteDoc(api.doc(db, 'webAvailableDrivers', uid)), 'Ya no figurás como disponible.');
-
-tripForm.onsubmit = event => {
-  event.preventDefault();
-  saveForm(tripForm, async uid => {
-    const form = new FormData(tripForm);
-    const origin = form.get('origin').trim();
-    const destination = form.get('destination').trim();
-    const departure = new Date(form.get('departure')).getTime();
-    const seats = Number(form.get('seats'));
-    const phone = phoneNumber(form.get('phone'));
-    if (!origin || !destination || !form.has('consent')) throw new Error('Completá los datos y aceptá compartir tu contacto.');
-    if (!Number.isFinite(departure) || departure <= Date.now()) throw new Error('Elegí una fecha y hora futuras.');
-    if (!Number.isInteger(seats) || seats < 1 || seats > 8) throw new Error('Indicá entre 1 y 8 lugares.');
-    const trip = tripForm.dataset.editId ? api.doc(db,'webPlannedTrips',tripForm.dataset.editId) : api.doc(api.collection(db, 'webPlannedTrips'));
-    const batch = api.writeBatch(db);
-    batch.set(trip, { owner: tripForm.dataset.owner || uid, origin, destination, departure, seats });
-    batch.set(api.doc(db, 'webTripContacts', trip.id), { phone });
-    await batch.commit();
-  }, 'Tu viaje quedó publicado.');
-};
-
-async function removeTrip(id) {
-  try {
-    const batch = api.writeBatch(db);
-    batch.delete(api.doc(db, 'webPlannedTrips', id));
-    batch.delete(api.doc(db, 'webTripContacts', id));
-    await batch.commit();
-    toast('Viaje retirado.');
-  } catch {
-    toast('No se pudo retirar el viaje.');
-  }
-}
 
 async function initFirebase() {
   const [appSdk, authSdk, firestoreSdk] = await Promise.all([
@@ -338,37 +66,37 @@ async function initFirebase() {
   const app = appSdk.initializeApp(firebaseConfig);
   auth = authSdk.getAuth(app);
   db = api.getFirestore(app);
+  state.api=api;state.db=db;
   connectEditorial(api, db);
-  connectDirectory(api, db);
-  connectJobs(api, db, openAuth);
-  connectMarket(api, db, openAuth);
-  connectRentals(api, db, openAuth);
+  directory?.connectDirectory(api, db);
+  jobs?.connectJobs(api, db, openAuth);
+  market?.connectMarket(api, db, openAuth);
+  rentals?.connectRentals(api, db, openAuth);
   const provider = new authSdk.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   authSdk.onAuthStateChanged(auth, user => {
-    currentUser = user;
+    currentUser = user;state.user=user;
     setEditorialSession(user);
-    setJobsSession(user);
-    setMarketSession(user);
-    setRentalsSession(user);
-    setDirectorySession(user);
+    jobs?.setJobsSession(user);
+    market?.setMarketSession(user);
+    rentals?.setRentalsSession(user);
+    directory?.setDirectorySession(user);
     login.textContent = user ? 'Mi cuenta' : 'Ingresar';
     googleButton.hidden = Boolean(user);
     mobilityAuth.forEach(button => { button.hidden = Boolean(user); });
     logout.hidden = !user;
     authStatus.textContent = user ? 'Sesión iniciada.' : '';
     if (!user) {
-      contactRequest++;
-      for (const id of ['contact-dialog', 'trip-dialog', 'driver-dialog']) byId(id).close();
+      rides?.clear();
     }
-    observeLists();
+    rides?.refresh();
   });
   googleButton.onclick = async () => {
     const action = afterLogin;
     googleButton.disabled = true;
     try {
       const { user } = await authSdk.signInWithPopup(auth, provider);
-      currentUser = user;
+      currentUser = user;state.user=user;
       authDialog.close();
       action?.();
       api.setDoc(api.doc(db, 'users', user.uid), {
@@ -403,13 +131,7 @@ async function initFirebase() {
   authStatus.textContent = '';
 }
 
-renderLists();
-setInterval(() => {
-  const now = Date.now();
-  if (drivers.some(driver => driver.expiresAt <= now) || trips.some(trip => trip.departure <= now)) {
-    observeLists();
-  }
-}, 15000);
+
 googleButton.disabled = true;
 initFirebase().catch(() => {
   googleButton.disabled = true;

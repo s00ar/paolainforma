@@ -1,0 +1,12 @@
+<dialog id="job-dialog" aria-labelledby="job-dialog-title"><form id="job-form" class="ride-form">
+<button type="button" class="close" data-close aria-label="Cerrar">×</button>
+<h2 id="job-dialog-title">Publicar una oportunidad</h2>
+<label>Puesto o título <input name="title" required maxlength="120" autocomplete="off"></label>
+<label>Empresa o persona que ofrece el trabajo <input name="company" required maxlength="100" autocomplete="organization"></label>
+<label>Localidad <input name="location" required maxlength="100" placeholder="Paola"></label>
+<label>Descripción y condiciones <textarea name="description" required maxlength="3000" rows="5"></textarea></label>
+<label>WhatsApp con prefijo internacional <input name="phone" type="tel" required maxlength="25" autocomplete="tel" placeholder="+39 …"></label>
+<label class="ride-consent"><input name="consent" type="checkbox" required> Acepto compartir este WhatsApp con usuarios con sesión para que me contacten sobre esta oferta.</label>
+<p>Las ofertas permanecen visibles durante 30 días. Podés editarlas o eliminarlas antes.</p>
+<p class="form-status" role="status"></p><button type="submit" class="primary">Guardar oferta</button>
+</form></dialog>

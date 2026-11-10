@@ -1,5 +1,5 @@
-import { firebaseConfig } from './firebase-config.js?v=20261110-3';
-import { editorialEnabled } from './rides-settings.js?v=20261110-3';
+import { firebaseConfig } from './firebase-config.js?v=20261110-4';
+import { editorialEnabled } from './rides-settings.js?v=20261110-4';
 
 const byId = id => document.getElementById(id);
 const el = (tag, text, className) => {
@@ -24,7 +24,7 @@ const calendarSeed = [{
   title: 'San Martino en el Quartiere Rocchetta',
   location: 'Quartiere Rocchetta, Paola',
   description: 'VIII edición. Degustación de vinos, puestos gastronómicos, música en vivo, DJ set y Danza di San Martino.',
-  href: './#san-martino-2026',
+  href: './noticias.html#san-martino-2026',
 }];
 
 const requested = new URLSearchParams(location.search).get('fecha') || '';

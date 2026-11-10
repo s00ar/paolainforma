@@ -1,0 +1,42 @@
+<section class="section community" id="viajes" aria-labelledby="rides-title">
+  <div class="ride-panels mobility-grid">
+    <div class="mobility-guide">
+      <header class="mobility-intro">
+        <span class="eyebrow">MOVILIDAD EN PAOLA</span>
+        <h2 id="rides-title">Viajes compartidos</h2>
+        <p>Encontrá un chofer disponible o publicá un trayecto para compartir el gasto de combustible.</p>
+      </header>
+      <section class="mobility-help" aria-labelledby="rides-driver-guide">
+        <div class="mobility-help-copy"><span class="mobility-symbol"><svg class="mobility-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.25"/><path d="m4 9 6.1 1.8m3.8 0L20 9m-8 5.3V21"/></svg></span><div>
+          <h3 id="rides-driver-guide">Para ofrecerte como conductor</h3>
+          <p>Si sos chofer de Remis, ingresá con Google y abrí «Mi disponibilidad». Completá tu nombre y WhatsApp, elegí cuánto tiempo vas a estar disponible y confirmá. Podés retirarte de la lista antes de que venza el plazo.</p>
+        </div></div>
+        <div class="mobility-actions"><button class="primary" type="button" id="manage-driver"><svg class="mobility-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7.5 3.5v4m9-4v4M3.5 10.5h17M8 14.5h1m3 0h1m3 0h1M8 17.5h1m3 0h1"/></svg> Mi disponibilidad</button><button class="outline mobility-google" type="button" data-mobility-auth><img class="google-mark" src="./assets/google-sign-in.png" width="18" height="18" alt=""> Ingresar con Google</button></div>
+      </section>
+    </div>
+    <div class="mobility-results">
+      <section class="ride-panel mobility-active" id="conductores-activos" aria-labelledby="drivers-title">
+        <div class="mobility-active-head">
+          <div>
+            <h3 id="drivers-title"><span class="mobility-dot" aria-hidden="true"></span> Conductores activos ahora</h3>
+            <p>Choferes de Remis que se marcaron como disponibles.</p>
+          </div><span class="mobility-badge" id="driver-count" hidden></span>
+        </div>
+        <div class="mobility-active-body">
+          <ul class="ride-list" id="driver-list"></ul><h3>Todos los conductores</h3><p>Los perfiles permanecen registrados aunque no estén disponibles. Las estrellas reflejan opiniones de usuarios.</p><p id="directory-status" role="status"></p><ul class="job-offers" id="driver-directory"></ul>
+          <p class="mobility-status" id="driver-status" role="status">Cargando disponibilidad…</p>
+        </div>
+      </section>
+      <section class="mobility-planned" aria-labelledby="planned-title">
+        <h3 id="planned-title">Viajes programados</h3>
+        <p>Sirven para organizar un trayecto que ya tenés previsto. Por ejemplo, si vas de Paola a Cosenza el sábado y tenés tres plazas libres, publicá el origen, el destino, la fecha y la hora. Quienes hagan el mismo recorrido pueden contactarte y compartir el gasto de combustible.</p>
+        <div class="mobility-actions">
+          <button class="outline" type="button" id="publish-trip"><svg class="mobility-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg> Publicar un viaje</button>
+          <p class="mobility-status" id="trip-status" role="status">Cargando viajes…</p>
+        </div>
+        <ul class="ride-list" id="trip-list"></ul>
+      </section>
+    </div>
+  </div>
+  <p class="notice mobility-notice"><svg class="mobility-icon mobility-info" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg> <span>Coordiná los detalles directamente con la otra persona y confirmá quién viaja antes de salir. Los viajes son acuerdos entre particulares para compartir combustible. Paola y alrededores informa facilita el contacto. <a href="#politicas">Políticas y condiciones ↗</a></span></p>
+</section>

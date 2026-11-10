@@ -1,8 +1,9 @@
+await import('./generate-pages.mjs');
 import { cp, mkdir, rm, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 const root = new URL('.', import.meta.url);
 const dist = new URL('./dist/', root);
-const files = ['.htaccess', 'index.html', 'styles.css', 'rides.css', 'app.js', 'firebase-config.js', 'rides-settings.js', 'editorial.js', 'jobs.js', 'market.js', 'directory.js', 'rentals.js', 'contactos.html', 'calendario.html', 'calendar.js', 'ripopola-calabria.html'];
+const files = ['.htaccess', 'index.html', 'styles.css', 'rides.css', 'pages.css', 'legacy-links.js', 'rides.js', 'noticias.html', 'mapa.html', 'viajes.html', 'tienda.html', 'trabajo.html', 'alquileres.html', 'politicas.html', 'app.js', 'firebase-config.js', 'rides-settings.js', 'editorial.js', 'jobs.js', 'market.js', 'directory.js', 'rentals.js', 'contactos.html', 'calendario.html', 'calendar.js', 'ripopola-calabria.html'];
 const source = new Map(await Promise.all(files.map(async name => [name, await readFile(new URL(name, root), 'utf8')])));
 // A release shares one immutable filename suffix, including transitive module imports.
 // A cached HTML page can never combine old settings with new application modules.
