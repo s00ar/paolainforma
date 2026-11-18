@@ -37,6 +37,7 @@ try{
  await page.goto(base+'/tienda.html');await page.waitForURL('**/es/tienda.html');await ready();
  await page.locator('#publish-market').click();await page.locator('#googleLogin').click();await page.waitForFunction(()=>document.getElementById('market-dialog').open);
  await page.locator('#market-form [name="title"]').fill('Bicicletta usata');
+ if(await page.locator('#market-form [name="sourceLanguage"]').isEnabled())await page.locator('#market-form [name="sourceLanguage"]').selectOption('it');
  let warned=false;page.once('dialog',d=>{warned=true;d.dismiss();});await page.locator('[data-language="it"]').evaluate(e=>e.click());assert.equal(warned,true);assert.match(page.url(),/\/es\/tienda/);assert.equal(await page.locator('#market-form [name="title"]').inputValue(),'Bicicletta usata');
  for(const [n,v]of Object.entries({price:'50',location:'Paola',description:'Bicicletta in buone condizioni',phone:'+390000000001'}))await page.locator(`#market-form [name="${n}"]`).fill(v);
  await page.locator('#market-form [name="consent"]').check();await page.locator('#market-form [type="submit"]').click();await page.waitForFunction(()=>!document.getElementById('market-dialog').open);

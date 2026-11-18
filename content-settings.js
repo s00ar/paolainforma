@@ -1,5 +1,5 @@
-// Enable only after publishing firestore.rules; keep existing saves compatible meanwhile.
-export const languageMetadataEnabled = false;
-// Enable after deploying the callable and triggers with approved billing and quotas.
+// Rules publication confirmed by the owner on 2026-11-18.
+export const languageMetadataEnabled = true;
+// Owner chose to keep paid translation inactive; do not enable without new authorization.
 export const translationServiceEnabled = false;
 export const translationRegion = 'europe-west1';

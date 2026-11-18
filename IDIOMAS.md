@@ -18,6 +18,10 @@ Las noticias, artículos y guías usan el modelo editorial existente `webBlogPos
 
 Los originales se muestran siempre que no haya traducción actual. Las traducciones automáticas están rotuladas y permiten volver al original. Un hash de los campos del texto y su idioma identifica la versión; un cambio invalida la traducción y el índice anteriores. El panel señala versiones pendientes de actualizar. Los borradores no se traducen automáticamente ni se envían al proveedor. Sus traducciones revisadas solo pueden recuperarlas administradores.
 
+## Estado confirmado el 18 de noviembre de 2026
+
+El propietario confirmó la publicación completa de las reglas. `languageMetadataEnabled` está activo: los formularios permiten elegir y guardar el idioma del original. El propietario decidió mantener el servicio de traducción preparado **sin activar cargos**; `translationServiceEnabled` continúa desactivado. No activar Blaze, el proveedor o las funciones de traducción sin una nueva autorización.
+
 ## Servicio preparado, activación independiente
 
 El código está en `functions/`, usa el **mismo proyecto Firebase** y Google Cloud Translation v3 NMT. El worker anterior es un webhook de notificaciones móviles, no un procesador fiable de cambios de Firestore; se conserva. Los triggers específicos de Firestore preparan traducciones y términos de búsqueda al crear/modificar contenido. No dependen de pulsar «Traducir». Un trabajo horario reintenta tareas fallidas; la publicación original sigue visible.
