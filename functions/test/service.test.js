@@ -1,0 +1,35 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {getFirestore} from 'firebase-admin/firestore';
+import {languageContent,marketChanged} from '../index.js';
+import {sourceInfo,translatedRecord} from '../core.js';
+const enabled=Boolean(process.env.FIRESTORE_EMULATOR_HOST);
+test('callable authorization, current-version cache, review moderation, search and deletion', {skip:!enabled},async()=>{
+ process.env.TRANSLATION_ENABLED='true';
+ const db=getFirestore();const google=(uid,email=uid+'@example.test')=>({uid,token:{email,email_verified:true,firebase:{sign_in_provider:'google.com'}}});
+ const author=google('service-author'),other=google('service-reader'),admin=google('service-admin'),root=google('service-root','leston.s.h@gmail.com');
+ const call=(auth,data)=>languageContent.run({auth,data,rawRequest:{ip:'127.0.0.1'}});
+ const path='webMarketOffers/service-product',item={title:'Bicicletta usata',description:'Bicicletta',owner:author.uid,sourceLanguage:'it',price:'50',expiresAt:Date.now()+86400000};
+ await db.doc(path).set(item);const info=sourceInfo(path,item);
+ const cache=await translatedRecord(info,null,async(_,lang)=>({fields:{title:lang==='es'?'Bicicleta usada':'Used bicycle',description:lang==='es'?'Bicicleta':'Bicycle'},detectedLanguage:'it'}));
+ await db.doc('webTranslations/'+info.key).set(cache);
+ await assert.rejects(()=>call(null,{action:'get',path,language:'es'}),e=>e.code==='permission-denied');
+ let result=await call(other,{action:'translate',path,language:'es'});assert.equal(result.translation.fields.title,'Bicicleta usada');
+ for(const query of ['bicicleta','bicicletta','bicycle']){const found=await call(other,{action:'search',collection:'webMarketOffers',query});assert.equal(found.items[0].id,'service-product');assert.equal(found.items[0].title,'Bicicletta usata');}
+ await db.doc(path).update({title:'Nuovo testo'});result=await call(other,{action:'get',path,language:'es'});assert.equal(result.translation,null);
+ const found=await call(other,{action:'search',collection:'webMarketOffers',query:'bicicleta'});assert.deepEqual(found.items,[]);
+ const blogPath='webBlogPosts/service-draft',blog={title:'Original',summary:'Private',body:'Private body',published:false};
+ await db.doc(blogPath).set(blog);await db.doc('webAdmins/'+admin.token.email).set({name:'Delegated'});
+ const original=await call(root,{action:'get',path:blogPath,language:'es'});
+ const review={action:'review',path:blogPath,language:'es',sourceHash:original.sourceHash,fields:{title:'Revisado',summary:'Privado',body:'Contenido privado'}};
+ await assert.rejects(()=>call(other,review),e=>e.code==='permission-denied');await call(admin,review);
+ await assert.rejects(()=>call(null,{action:'get',path:blogPath,language:'es'}),e=>e.code==='permission-denied');
+ assert.equal((await call(root,{action:'get',path:blogPath,language:'es'})).translation.kind,'reviewed');
+ await db.doc(blogPath).update({published:true});assert.equal((await call(null,{action:'get',path:blogPath,language:'es'})).translation.fields.title,'Revisado');
+ await db.doc(blogPath).update({body:'Changed original'});assert.equal((await call(null,{action:'get',path:blogPath,language:'es'})).translation,null);
+ await assert.rejects(()=>call(admin,review),e=>e.code==='aborted');
+ await db.doc('webAdmins/'+admin.token.email).delete();await assert.rejects(()=>call(admin,review),e=>e.code==='permission-denied');
+ await db.doc(path).delete();await marketChanged.run({params:{id:'service-product'}});assert.equal((await db.doc('webTranslations/'+info.key).get()).exists,false);
+ await assert.rejects(()=>call(other,{action:'get',path,language:'es'}),e=>e.code==='not-found');
+ process.env.TRANSLATION_ENABLED='false';await assert.rejects(()=>call(other,{action:'search',collection:'webMarketOffers',query:'bicycle'}),e=>e.code==='unavailable');
+});

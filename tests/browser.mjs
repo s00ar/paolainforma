@@ -1,0 +1,64 @@
+// Firebase and translation responses are test doubles. No production account is used.
+import {fileURLToPath} from 'node:url';
+import {createServer} from 'node:http';
+import {readFile,mkdir} from 'node:fs/promises';
+import {extname,resolve} from 'node:path';
+import assert from 'node:assert/strict';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
+const root=resolve(process.env.TEST_ROOT||fileURLToPath(new URL('../',import.meta.url)));
+const server=createServer(async(req,res)=>{try{let file=new URL(req.url,'http://localhost').pathname;if(file.endsWith('/'))file+='index.html';const path=resolve(root,'.'+file);if(!path.startsWith(root))throw Error();const bytes=await readFile(path);res.writeHead(200,{'Content-Type':({'.js':'text/javascript','.html':'text/html','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.ico':'image/x-icon'})[extname(path)]||'application/octet-stream'}).end(bytes);}catch{res.writeHead(404).end();}});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
+const firestore=`
+const data=new Map(JSON.parse(sessionStorage.getItem('records')||'[]')),watchers=[];let next=Date.now();
+const result=(key,value)=>({id:key.split('/').at(-1),data:()=>value,exists:()=>Boolean(value)});
+const notify=()=>{sessionStorage.setItem('records',JSON.stringify([...data]));for(const {q,cb} of watchers)cb({docs:[...data].filter(([k,v])=>k.slice(0,k.lastIndexOf('/'))===q.name&&(q.filters||[]).every(f=>f.op==='=='?v[f.field]===f.value:f.op==='>'?v[f.field]>f.value:f.op==='>='?v[f.field]>=f.value:v[f.field]<f.value)).map(([k,v])=>result(k,v))});};
+window.qa={seed:(k,v)=>{data.set(k,v);notify();},records:()=>[...data],error:()=>watchers.forEach(w=>w.err?.(Error('test')))};
+export const getFirestore=()=>({});export const collection=(_, ...parts)=>({name:parts.join('/')});export const doc=(db,...parts)=>db.name?{key:db.name+'/'+(++next)}:{key:parts.join('/')};
+export const query=(ref,...filters)=>({...ref,filters:filters.filter(Boolean)});export const where=(field,op,value)=>({field,op,value});export const orderBy=()=>null;export const limit=()=>null;
+export const onSnapshot=(q,cb,err)=>{const w={q,cb,err};watchers.push(w);setTimeout(notify,50);return ()=>{const i=watchers.indexOf(w);if(i>=0)watchers.splice(i,1);};};
+export const getDocFromServer=async({key})=>result(key,data.get(key));export const setDoc=async({key},v)=>{data.set(key,v);notify();};export const deleteDoc=async({key})=>{data.delete(key);notify();};export const serverTimestamp=()=>Date.now();
+export const addDoc=async(ref,value)=>setDoc({key:ref.name+'/'+(++next)},value);export const updateDoc=async(ref,value)=>setDoc(ref,{...data.get(ref.key),...value});
+export const writeBatch=()=>{const work=[];return {set:(r,v)=>work.push(()=>data.set(r.key,v)),delete:r=>work.push(()=>data.delete(r.key)),commit:async()=>{work.forEach(f=>f());notify();}}};`;
+const auth=`let listener;const user={uid:'qa',email:localStorage.getItem('qa-admin')?'leston.s.h@gmail.com':'qa@example.test',emailVerified:true,displayName:'QA'};export const getAuth=()=>({});export class GoogleAuthProvider{setCustomParameters(){}}export const onAuthStateChanged=(_,cb)=>{listener=cb;cb(localStorage.getItem('qa-login')?user:null)};export const signInWithPopup=async()=>{localStorage.setItem('qa-login','yes');listener(user);return {user}};export const signOut=async()=>{localStorage.removeItem('qa-login');listener(null)};`;
+const browser=await chromium.launch();
+try{
+ const context=await browser.newContext({viewport:{width:1440,height:950},reducedMotion:'reduce'});
+ await context.route('https://fonts.googleapis.com/**',r=>r.fulfill({body:''}));
+ await context.route('https://www.gstatic.com/firebasejs/**',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:r.request().url().endsWith('firebase-app.js')?'export const initializeApp=()=>({});':r.request().url().endsWith('firebase-auth.js')?auth:firestore}));
+ const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('response',r=>{if(r.url().startsWith(base)&&r.status()>=400)errors.push(r.status()+' '+r.url());});
+ const ready=()=>page.waitForFunction(()=>document.getElementById('googleLogin')&&!document.getElementById('googleLogin').disabled);
+ for(const lang of ['it','es','en'])for(const route of ['index','noticias','calendario','mapa','viajes','tienda','trabajo','alquileres','contactos','politicas','ripopola-calabria']){
+  await page.goto(`${base}/${lang}/${route}.html`);await ready();
+  assert.equal(await page.locator('html').getAttribute('lang'),lang);assert.equal(await page.locator('#nav a').count(),8);assert.equal(await page.locator('main h1').count(),1);
+  assert.equal(await page.locator('link[hreflang]').count(),4);assert.equal((await page.locator('body').innerText()).includes('{{'),false);
+  for(const width of [360,390,768,1440]){await page.setViewportSize({width,height:950});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${lang}/${route} overflow ${width}`);}
+ }
+ await page.goto(base+'/tienda.html');await page.waitForURL('**/es/tienda.html');await ready();
+ await page.locator('#publish-market').click();await page.locator('#googleLogin').click();await page.waitForFunction(()=>document.getElementById('market-dialog').open);
+ await page.locator('#market-form [name="title"]').fill('Bicicletta usata');
+ let warned=false;page.once('dialog',d=>{warned=true;d.dismiss();});await page.locator('[data-language="it"]').evaluate(e=>e.click());assert.equal(warned,true);assert.match(page.url(),/\/es\/tienda/);assert.equal(await page.locator('#market-form [name="title"]').inputValue(),'Bicicletta usata');
+ for(const [n,v]of Object.entries({price:'50',location:'Paola',description:'Bicicletta in buone condizioni',phone:'+390000000001'}))await page.locator(`#market-form [name="${n}"]`).fill(v);
+ await page.locator('#market-form [name="consent"]').check();await page.locator('#market-form [type="submit"]').click();await page.waitForFunction(()=>!document.getElementById('market-dialog').open);
+ const id=await page.evaluate(()=>window.qa.records().find(([k])=>k.startsWith('webMarketOffers/'))[0]);
+ for(const lang of ['it','en','es']){await page.locator(`[data-language="${lang}"]`).click();await ready();await page.locator('#market-list h3').getByText('Bicicletta usata').waitFor();assert.equal(await page.evaluate(()=>window.qa.records().filter(([k])=>k.startsWith('webMarketOffers/')).length),1);assert.equal(await page.evaluate(()=>window.qa.records().find(([k])=>k.startsWith('webMarketOffers/'))[0]),id);}
+ await page.locator('.content-language button').first().click();assert.match(await page.locator('.content-language').innerText(),/pendiente de activación/);
+ await page.goto(base+'/en/calendario.html?fecha=2026-11-07#calendar-events');await ready();await page.locator('[data-language="it"]').click();await ready();assert.match(page.url(),/\/it\/calendario.html\?fecha=2026-11-07#calendar-events/);await page.locator('#calendar-events').getByText('San Martino nel Quartiere Rocchetta').waitFor();
+ await mkdir(new URL('../test-results/',import.meta.url),{recursive:true});
+ for(const width of [360,390,768,1440]){await page.goto(base+'/it/viajes.html');await ready();await page.setViewportSize({width,height:950});await page.screenshot({path:fileURLToPath(new URL(`../test-results/it-viajes-${width}.png`,import.meta.url)),fullPage:true});}
+ // Exercise the activation path separately, with a clearly simulated callable provider.
+ await context.route('**/content-settings*.js',r=>r.fulfill({contentType:'text/javascript',body:'export const languageMetadataEnabled=true,translationServiceEnabled=true,translationRegion="europe-west1";'}));
+ await context.route('**/firebase-functions.js',r=>r.fulfill({contentType:'text/javascript',headers:{'Access-Control-Allow-Origin':'*'},body:`export const getFunctions=()=>({});export const httpsCallable=()=>async request=>{window.translationCalls=(window.translationCalls||0)+1;if(window.translationFail)throw Error('test failure');const item=window.qa.records().find(([k])=>k.startsWith('webMarketOffers/'));if(request.action==='search')return {data:{items:item?[{...item[1],id:item[0].split('/').at(-1)}]:[]}};return {data:{sourceHash:'test-version',sourceLanguage:'it',translation:{kind:request.action==='review'?'reviewed':'automatic',fields:{title:'Bicicleta usada',description:'Bicicleta en buen estado',summary:'Resumen traducido',body:'Artículo traducido'}}}};};`}));
+ await page.goto(base+'/es/tienda.html');await ready();await page.locator('#market-list h3').waitFor();
+ await page.locator('.content-language button').first().click();await page.locator('#market-list h3').getByText('Bicicleta usada').waitFor();assert.match(await page.locator('.content-language').innerText(),/Traducción automática/);
+ await page.locator('.content-language button').first().click();assert.equal(await page.locator('#market-list h3').innerText(),'Bicicletta usata');
+ await page.evaluate(()=>window.translationFail=true);await page.locator('.content-language button').first().click();assert.match(await page.locator('.content-language').innerText(),/No se pudo traducir/);assert.equal(await page.locator('#market-list h3').innerText(),'Bicicletta usata');
+ await page.evaluate(()=>window.translationFail=false);await page.locator('.content-language button').first().click();await page.locator('#market-list h3').getByText('Bicicleta usada').waitFor();
+ await page.locator('.content-search input').fill('bicicleta');await page.waitForFunction(()=>window.translationCalls>=4);await page.locator('#market-list h3').getByText('Bicicletta usata').waitFor();
+ for(const [route,publish,form,values] of [['trabajo','publish-job','job-form',{title:'Offerta',company:'Impresa',location:'Paola',description:'Lavoro',phone:'+390000000001'}],['alquileres','publish-rental','rental-form',{title:'Appartamento',location:'Paola',rent:'500',rooms:'2',description:'Affitto',phone:'+390000000001'}]]){
+  await page.goto(base+'/it/'+route+'.html');await ready();await page.locator('#'+publish).click();for(const [name,value] of Object.entries(values))await page.locator('#'+form+' [name="'+name+'"]').fill(value);assert.equal(await page.locator('#'+form+' [name="sourceLanguage"]').inputValue(),'it');await page.locator('#'+form+' [name="consent"]').check();await page.locator('#'+form+' [type="submit"]').click();await page.waitForFunction(id=>!document.getElementById(id).closest('dialog').open,form);
+ }
+ await page.goto(base+'/en/viajes.html');await ready();await page.locator('#manage-driver').click();await page.locator('#driver-form [name="name"]').fill('Test Driver');await page.locator('#driver-form [name="phone"]').fill('+390000000001');await page.locator('#driver-form [name="consent"]').check();await page.locator('#driver-form [type="submit"]').click();await page.waitForFunction(()=>!document.getElementById('driver-dialog').open);
+ await page.locator('#publish-trip').click();for(const [name,value] of Object.entries({origin:'Paola',destination:'Cosenza',departure:'2030-01-01T10:00',seats:'3',phone:'+390000000001'}))await page.locator('#trip-form [name="'+name+'"]').fill(value);await page.locator('#trip-form [name="consent"]').check();await page.locator('#trip-form [type="submit"]').click();await page.waitForFunction(()=>!document.getElementById('trip-dialog').open);assert.match(await page.locator('#trip-list').innerText(),/3 seats available/);
+ await page.evaluate(()=>localStorage.setItem('qa-admin','yes'));await page.goto(base+'/en/noticias.html');await ready();await page.evaluate(()=>document.getElementById('login').click());await page.locator('#open-editorial').click();await page.locator('#blog-form [name="title"]').fill('Editorial test');await page.locator('#blog-form [name="summary"]').fill('Summary');await page.locator('#blog-form [name="body"]').fill('Body');await page.locator('#blog-form [name="published"]').check();await page.locator('#blog-form [type="submit"]').click();await page.locator('#editorial-blog-list li').waitFor();await page.locator('#editorial-blog-list button').getByText('Language versions').click();await page.locator('dialog[open]').last().getByRole('button',{name:'Save reviewed translation'}).click();await page.locator('dialog[open]').last().getByText('Reviewed translation',{exact:true}).waitFor();
+ assert.deepEqual(errors,[]);console.log('PASS: 33 pages × 4 widths; navigation, metadata, old links, dirty forms, session, same shared item; translation/original/error/retry/search; job/rental/driver/trip forms and editorial translation UI. Firebase and provider simulated.');
+}finally{await browser.close();server.close();}

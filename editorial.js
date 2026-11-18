@@ -1,4 +1,8 @@
-import { editorialEnabled } from './rides-settings.js?v=20261110-4';
+import {languageField,languagePayload,attachTranslation} from './content-language.js';
+import {editTranslations} from './editorial-languages.js';
+import {languageMetadataEnabled} from './content-settings.js';
+import { t, locale } from './i18n.js';
+import { editorialEnabled } from './rides-settings.js?v=20261118-i18n';
 
 const byId = id => document.getElementById(id);
 const el = (tag, text, className) => {
@@ -18,6 +22,10 @@ const forms = {
   event: byId('event-form'),
   admin: byId('admin-form'),
 };
+const kindLabel=document.createElement('label');kindLabel.textContent=t('editorial.kind');
+const kindSelect=document.createElement('select');kindSelect.name='contentKind';kindSelect.disabled=!languageMetadataEnabled;
+for(const [value,key] of [['article','editorial.article'],['news','editorial.news'],['guide','editorial.guide']]){const option=document.createElement('option');option.value=value;option.textContent=t(key);kindSelect.append(option);}
+kindLabel.append(kindSelect);forms.blog.prepend(kindLabel);
 let isOwner = false;
 let isAdmin = false;
 let sessionVersion = 0;
@@ -32,10 +40,11 @@ export function connectEditorial(firestore, database) {
   if (byId('blog-posts')) api.onSnapshot(api.query(api.collection(db, 'webBlogPosts'), api.where('published', '==', true)), snapshot => {
     const posts = rows(snapshot).sort((a, b) => b.updatedAt - a.updatedAt);
     byId('blog-posts').replaceChildren(...posts.map(post => {
-      const card = el('article', undefined, 'news-card card-copy');
+      const card = el('article', undefined, "news-card card-copy");
       const details = el('details');
-      details.append(el('summary', 'Leer artículo'), el('p', post.body, 'blog-body'));
+      details.append(el('summary', t('msg.1078b4db9b')), el('p', post.body, 'blog-body'));
       card.append(el('small', 'BLOG'), el('h3', post.title), el('p', post.summary), details);
+      attachTranslation(card,'webBlogPosts/'+post.id,post,{title:card.querySelector('h3'),summary:card.querySelector(':scope > p'),body:card.querySelector('.blog-body')},{editorial:true});
       return card;
     }));
   }, () => { byId('blog-posts').replaceChildren(); });
@@ -65,8 +74,8 @@ const operations = {
   blog: {
     collection: 'webBlogPosts',
     fields: ['title', 'summary', 'body'],
-    label: item => item.title + (item.published ? ' · Publicado' : ' · Borrador'),
-    payload: (form, data) => ({ ...data, published: form.elements.published.checked, updatedAt: Date.now() }),
+    label: item => item.title + (item.published ? ' · '+t('common.published') : ' · '+t('common.draft')),
+    payload: (form, data) => ({ ...data, published: form.elements.published.checked, updatedAt: Date.now(),...(languageMetadataEnabled?{contentKind:form.elements.contentKind.value}:{}) }),
   },
   event: {
     collection: 'webCalendarEvents',
@@ -94,7 +103,7 @@ function action(label, run) {
 }
 
 function resetForm(form) {
-  form.reset();
+  form.reset();if(form!==forms.admin)languageField(form);
   delete form.dataset.editId;
   if (form.elements.email) form.elements.email.readOnly = false;
 }
@@ -102,9 +111,9 @@ function resetForm(form) {
 function editForm(kind, item) {
   const form = forms[kind];
   resetForm(form);
-  form.dataset.editId = item.id;
+  form.dataset.editId = item.id;if(kind!=='admin')languageField(form,item);
   for (const name of operations[kind].fields) form.elements[name].value = item[name] || '';
-  if (kind === 'blog') form.elements.published.checked = item.published;
+  if (kind === 'blog') {form.elements.published.checked = item.published;form.elements.contentKind.value=item.contentKind||'article';}
   if (kind === 'admin') {
     form.elements.email.value = item.id;
     form.elements.email.readOnly = true;
@@ -114,13 +123,13 @@ function editForm(kind, item) {
 
 async function write(task, success) {
   if (!isAdmin) return false;
-  status.textContent = 'Guardando…';
+  status.textContent = t('common.saving');
   try {
     await task();
     status.textContent = success;
     return true;
   } catch {
-    status.textContent = 'No se pudo guardar. Comprobá tu acceso y volvé a intentar.';
+    status.textContent = t('msg.caf3390e7d');
     return false;
   }
 }
@@ -138,11 +147,11 @@ for (const [kind, config] of Object.entries(operations)) {
     if (submit.disabled) return;
     const data = Object.fromEntries(config.fields.map(name => [name, form.elements[name].value.trim()]));
     if (['title', 'summary', 'body', 'name'].some(name => name in data && !data[name])) {
-      status.textContent = 'Completá los campos obligatorios.';
+      status.textContent = t('msg.5520e89637');
       return;
     }
     const id = form.dataset.editId;
-    const values = config.payload(form, data);
+    const values = {...config.payload(form, data),...(kind!=='admin'?languagePayload(form):{})};
     submit.disabled = true;
     const saved = await write(async () => {
       if (kind === 'admin') {
@@ -151,13 +160,13 @@ for (const [kind, config] of Object.entries(operations)) {
           const email = form.elements.email.value.trim().toLowerCase();
           const ref = reference(config.collection, email);
           await api.runTransaction(db, async transaction => {
-            if ((await transaction.get(ref)).exists()) throw new Error('Ya existe');
+            if ((await transaction.get(ref)).exists()) throw new Error(t('msg.815d2204de'));
             transaction.set(ref, values);
           });
         }
       } else if (id) await api.updateDoc(reference(config.collection, id), values);
       else await api.addDoc(api.collection(db, config.collection), values);
-    }, 'Cambios guardados.');
+    }, t('msg.2398046c36'));
     if (saved) resetForm(form);
     submit.disabled = false;
   };
@@ -169,14 +178,15 @@ function renderRecords(kind, items) {
   list.replaceChildren(...items.map(item => {
     const row = el('li');
     const buttons = el('div', undefined, 'editorial-actions');
-    buttons.append(action('Editar', () => editForm(kind, item)), action('Eliminar', async () => {
-      if (!window.confirm('¿Eliminar ' + config.label(item) + '?')) return;
-      await write(() => api.deleteDoc(reference(config.collection, item.id)), 'Registro eliminado.');
+    buttons.append(action(t('common.edit'), () => editForm(kind, item)), action(t('common.delete'), async () => {
+      if (!window.confirm(t('msg.d3ae1175dd') + config.label(item) + '?')) return;
+      await write(() => api.deleteDoc(reference(config.collection, item.id)), t('msg.9f954be348'));
     }));
+    if(kind!=='admin')buttons.append(action(t('editorial.translations'),()=>editTranslations(config.collection,item)));
     row.append(el('strong', config.label(item)), buttons);
     return row;
   }));
-  if (!items.length) list.append(el('li', 'No hay registros.'));
+  if (!items.length) list.append(el('li', t('msg.290ebb624c')));
 }
 
 let driverProfiles = [], driverBlocks = [];
@@ -185,35 +195,35 @@ function renderDrivers() {
   list.replaceChildren(...driverProfiles.map(driver => {
     const row = el('li', driver.name);
     row.append(el('div', undefined, 'editorial-actions'));
-    row.lastChild.append(action('Editar chofer', async () => {
-      const name=prompt('Nombre del conductor',driver.name);if(name===null)return;
-      const phone=prompt('WhatsApp con prefijo internacional',driver.phone);if(phone===null)return;
-      await write(()=>api.updateDoc(reference('webDriverProfiles',driver.id),{name:name.trim(),phone:phone.trim()}),'Perfil actualizado.');
-    }), action('Eliminar chofer', async () => {
-      if (!window.confirm('¿Retirar y bloquear a ' + driver.name + '?')) return;
+    row.lastChild.append(action(t('msg.a71b858d4f'), async () => {
+      const name=prompt(t('msg.0b4fa8672d'),driver.name);if(name===null)return;
+      const phone=prompt(t('ui.306d85ffd0'),driver.phone);if(phone===null)return;
+      await write(()=>api.updateDoc(reference('webDriverProfiles',driver.id),{name:name.trim(),phone:phone.trim()}),t('msg.6dce2956f0'));
+    }), action(t('msg.9f6e59080b'), async () => {
+      if (!window.confirm(t('msg.a3628f7c8c') + driver.name + '?')) return;
       await write(async () => {
         const batch = api.writeBatch(db);
         batch.set(reference('webDriverBlocks', driver.id), { name: driver.name });
         batch.delete(reference('webAvailableDrivers', driver.id));
         batch.delete(reference('webDriverProfiles', driver.id));
         await batch.commit();
-      }, 'Chofer retirado y bloqueado.');
+      }, t('msg.52c1e9fc33'));
     }));
     return row;
   }), ...driverBlocks.map(driver => {
-    const row = el('li', driver.name + ' · Bloqueado');
+    const row = el('li', driver.name + ' · '+t('common.blocked'));
     const buttons = el('div', undefined, 'editorial-actions');
-    buttons.append(action('Quitar bloqueo', () =>
-      write(() => api.deleteDoc(reference('webDriverBlocks', driver.id)), 'Bloqueo quitado.')));
+    buttons.append(action(t('msg.32d8509684'), () =>
+      write(() => api.deleteDoc(reference('webDriverBlocks', driver.id)), t('msg.22b4982145'))));
     row.append(buttons);
     return row;
   }));
-  if (!driverProfiles.length && !driverBlocks.length) list.append(el('li', 'No hay choferes registrados.'));
+  if (!driverProfiles.length && !driverBlocks.length) list.append(el('li', t('msg.f8302374c5')));
 }
 
 function observeAdmin(collection, update) {
   adminStops.push(api.onSnapshot(api.collection(db, collection), snapshot => update(rows(snapshot)), () => {
-    status.textContent = 'No se pudieron cargar todos los datos de administración.';
+    status.textContent = t('msg.3fa0fe2bfe');
   }));
 }
 
@@ -225,7 +235,7 @@ openAdmin.onclick = () => {
   driverProfiles = [];
   driverBlocks = [];
   for (const id of ['blog', 'event', 'admin', 'driver']) {
-    byId('editorial-' + id + '-list').replaceChildren(el('li', 'Cargando…'));
+    byId('editorial-' + id + '-list').replaceChildren(el('li', t('common.loading')));
   }
   adminDialog.showModal();
   for (const [kind, config] of Object.entries(operations)) {

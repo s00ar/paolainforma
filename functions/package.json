@@ -1,0 +1,1 @@
+{"name":"paola-content-languages","private":true,"type":"module","main":"index.js","engines":{"node":"22"},"scripts":{"test":"node --test test/*.test.js"},"dependencies":{"firebase-admin":"^13.0.0","firebase-functions":"^6.0.0","google-auth-library":"^9.15.0"}}

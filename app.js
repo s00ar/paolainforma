@@ -1,9 +1,11 @@
-import {firebaseConfig} from './firebase-config.js?v=20261110-4';
-import {connectEditorial,setEditorialSession} from './editorial.js?v=20261110-4';
-const jobs=document.getElementById('trabajo')?await import('./jobs.js?v=20261110-4'):null;
-const market=document.getElementById('tienda')?await import('./market.js?v=20261110-4'):null;
-const rentals=document.getElementById('alquileres')?await import('./rentals.js?v=20261110-4'):null;
-const directory=document.getElementById('viajes')?await import('./directory.js?v=20261110-4'):null;
+import {setContentSession} from './content-language.js';
+import { t, locale } from './i18n.js';
+import {firebaseConfig} from './firebase-config.js?v=20261118-i18n';
+import {connectEditorial,setEditorialSession} from './editorial.js?v=20261118-i18n';
+const jobs=document.getElementById('trabajo')?await import('./jobs.js?v=20261118-i18n'):null;
+const market=document.getElementById('tienda')?await import('./market.js?v=20261118-i18n'):null;
+const rentals=document.getElementById('alquileres')?await import('./rentals.js?v=20261118-i18n'):null;
+const directory=document.getElementById('viajes')?await import('./directory.js?v=20261118-i18n'):null;
 const byId = id => document.getElementById(id);
 const authDialog = byId('authDialog');
 const googleButton = byId('googleLogin');
@@ -26,7 +28,7 @@ function toast(message) {
 function toggleMenu(open) {
   nav.classList.toggle('open', open);
   menu.setAttribute('aria-expanded', String(open));
-  menu.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+  menu.setAttribute('aria-label', open ? t('msg.f296f95ab8') : t('ui.1a7de9bc49'));
 }
 menu.onclick = () => toggleMenu(!nav.classList.contains('open'));
 nav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => toggleMenu(false)));
@@ -45,7 +47,7 @@ login.onclick = () => openAuth();
 jobs?.connectJobs(undefined, undefined, openAuth);
 market?.connectMarket(undefined, undefined, openAuth);
 rentals?.connectRentals(undefined, undefined, openAuth);
-const rides=document.getElementById('viajes')?(await import('./rides.js?v=20261110-4')).setupRides(state,openAuth,toast):null;
+const rides=document.getElementById('viajes')?(await import('./rides.js?v=20261118-i18n')).setupRides(state,openAuth,toast):null;
 const mobilityAuth = [...document.querySelectorAll('[data-mobility-auth]')];
 mobilityAuth.forEach(button => { button.onclick = () => openAuth(); });
 byId('closeDialog').onclick = () => authDialog.close();
@@ -75,17 +77,17 @@ async function initFirebase() {
   const provider = new authSdk.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   authSdk.onAuthStateChanged(auth, user => {
-    currentUser = user;state.user=user;
+    currentUser = user;state.user=user;setContentSession(user);
     setEditorialSession(user);
     jobs?.setJobsSession(user);
     market?.setMarketSession(user);
     rentals?.setRentalsSession(user);
     directory?.setDirectorySession(user);
-    login.textContent = user ? 'Mi cuenta' : 'Ingresar';
+    login.textContent = user ? t('msg.1a5e178d02') : t('ui.1d5a5b5811');
     googleButton.hidden = Boolean(user);
     mobilityAuth.forEach(button => { button.hidden = Boolean(user); });
     logout.hidden = !user;
-    authStatus.textContent = user ? 'Sesión iniciada.' : '';
+    authStatus.textContent = user ? t('msg.500ee5f47a') : '';
     if (!user) {
       rides?.clear();
     }
@@ -102,17 +104,17 @@ async function initFirebase() {
       api.setDoc(api.doc(db, 'users', user.uid), {
         uid: user.uid, displayName: user.displayName || '', email: user.email || '',
         photoURL: user.photoURL || '', provider: 'google', lastLoginAt: api.serverTimestamp(),
-      }, { merge: true }).catch(error => console.error('Perfil de Paola y alrededores informa', error.code));
+      }, { merge: true }).catch(error => console.error(t('msg.99cbf07052'), error.code));
     } catch (error) {
       const messages = {
-        'auth/unauthorized-domain': 'El dominio debe autorizarse en Firebase Authentication.',
-        'auth/operation-not-allowed': 'El inicio de sesión con Google aún no está habilitado.',
-        'auth/network-request-failed': 'No se pudo conectar con Google. Revisá tu conexión y volvé a intentar.',
-        'auth/web-storage-unsupported': 'Permití el almacenamiento del navegador para iniciar sesión.',
-        'auth/popup-blocked': 'Permití la ventana emergente de Google y volvé a intentar.',
-        'auth/popup-closed-by-user': 'Se cerró la ventana de Google. Podés volver a intentar.',
+        'auth/unauthorized-domain': t('msg.6728191269'),
+        'auth/operation-not-allowed': t('msg.2cd2316838'),
+        'auth/network-request-failed': t('msg.59354cbf00'),
+        'auth/web-storage-unsupported': t('msg.b417ae4d60'),
+        'auth/popup-blocked': t('msg.444e2179cd'),
+        'auth/popup-closed-by-user': t('msg.c22115ca70'),
       };
-      const message = messages[error.code] || 'No se pudo iniciar sesión con Google. Revisá la conexión y volvé a intentar.';
+      const message = messages[error.code] || t('msg.0ff151303d');
       authStatus.textContent = message;
       toast(message);
     } finally {
@@ -124,7 +126,7 @@ async function initFirebase() {
       await authSdk.signOut(auth);
       authDialog.close();
     } catch {
-      toast('No se pudo cerrar la sesión.');
+      toast(t('msg.f0b326f588'));
     }
   };
   googleButton.disabled = false;
@@ -135,6 +137,6 @@ async function initFirebase() {
 googleButton.disabled = true;
 initFirebase().catch(() => {
   googleButton.disabled = true;
-  authStatus.textContent = 'No se pudo conectar con Google. Revisá tu conexión y reintentá. Si abriste el sitio desde otra aplicación, probá abrirlo en Safari o Chrome.';
+  authStatus.textContent = t('msg.6c288771b4');
   byId('auth-retry').hidden = false;
 });

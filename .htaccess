@@ -4,3 +4,12 @@
     Header set Cache-Control "no-cache, max-age=0, must-revalidate"
   </FilesMatch>
 </IfModule>
+
+# Server code is deployed to Cloud Functions, never served by the static website.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^(?:functions|tests|node_modules)(?:/|$) - [F,L]
+</IfModule>
+<FilesMatch "^\.env(?:\..*)?$">
+  Require all denied
+</FilesMatch>

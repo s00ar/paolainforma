@@ -1,0 +1,1 @@
+{"indexes":[{"collectionGroup":"webTranslations","queryScope":"COLLECTION","fields":[{"fieldPath":"collection","order":"ASCENDING"},{"fieldPath":"searchTokens","arrayConfig":"CONTAINS"}]}],"fieldOverrides":[]}

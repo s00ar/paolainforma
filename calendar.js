@@ -1,5 +1,7 @@
-import { firebaseConfig } from './firebase-config.js?v=20261110-4';
-import { editorialEnabled } from './rides-settings.js?v=20261110-4';
+import {attachTranslation} from './content-language.js';
+import { t, locale } from './i18n.js';
+import { firebaseConfig } from './firebase-config.js?v=20261118-i18n';
+import { editorialEnabled } from './rides-settings.js?v=20261118-i18n';
 
 const byId = id => document.getElementById(id);
 const el = (tag, text, className) => {
@@ -12,18 +14,18 @@ const dayMs = 86400000;
 const romeDate = new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit',
 });
-const romeTime = new Intl.DateTimeFormat('es-IT', {
+const romeTime = new Intl.DateTimeFormat(locale, {
   timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 });
-const dateLabel = new Intl.DateTimeFormat('es', { dateStyle: 'long', timeZone: 'UTC' });
-const monthLabel = new Intl.DateTimeFormat('es', { year: 'numeric', month: 'long', timeZone: 'UTC' });
+const dateLabel = new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' });
+const monthLabel = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' });
 const currentMonth = () => new Date(romeDate.format(new Date()).slice(0, 7) + '-01T00:00:00Z');
 const dateKey = date => date.toISOString().slice(0, 10);
 const calendarSeed = [{
   date: '2026-11-07',
-  title: 'San Martino en el Quartiere Rocchetta',
-  location: 'Quartiere Rocchetta, Paola',
-  description: 'VIII edición. Degustación de vinos, puestos gastronómicos, música en vivo, DJ set y Danza di San Martino.',
+  title: t('ui.ffe50a4e29'),
+  location: "Quartiere Rocchetta, Paola",
+  description: t('msg.6e4cf404e6'),
   href: './noticias.html#san-martino-2026',
 }];
 
@@ -44,7 +46,7 @@ function renderCalendar() {
     .filter(item => item.date?.startsWith(monthKey))
     .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
   byId('calendar-month').textContent = monthLabel.format(month);
-  const cells = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => el('span', day, 'calendar-weekday'));
+  const cells = Array.from({length:7},(_,i)=>el('span',new Intl.DateTimeFormat(locale,{weekday:'short',timeZone:'UTC'}).format(new Date(Date.UTC(2026,10,2+i))),'calendar-weekday'));
   for (let i = 0; i < (month.getUTCDay() + 6) % 7; i++) cells.push(el('span'));
   const last = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 0)).getUTCDate();
   for (let day = 1; day <= last; day++) {
@@ -54,7 +56,7 @@ function renderCalendar() {
     if (key === current) cell.setAttribute('aria-current', 'date');
     if (count) {
       cell.type = 'button';
-      cell.setAttribute('aria-label', dateLabel.format(new Date(key)) + ', eventos: ' + count);
+      cell.setAttribute('aria-label', dateLabel.format(new Date(key)) + ', ' + t('calendar.events',{count}));
       cell.setAttribute('aria-pressed', String(selectedDay === key));
       cell.onclick = () => {
         selectedDay = selectedDay === key ? '' : key;
@@ -67,11 +69,11 @@ function renderCalendar() {
   }
   grid.replaceChildren(...cells);
   byId('calendar-clear').hidden = !selectedDay;
-  byId('calendar-selection').textContent = selectedDay ? dateLabel.format(new Date(selectedDay)) : 'Eventos del mes';
+  byId('calendar-selection').textContent = selectedDay ? dateLabel.format(new Date(selectedDay)) : t('ui.cc0d446a39');
   const visible = selectedDay ? all.filter(item => item.date === selectedDay) : all;
-  byId('calendar-status').textContent = calendarLoading.size ? 'Actualizando la agenda…'
-    : calendarFailed.size ? 'No se pudieron consultar todas las fuentes de la agenda.'
-    : visible.length ? '' : 'No hay eventos registrados para este período.';
+  byId('calendar-status').textContent = calendarLoading.size ? t('msg.95a423b578')
+    : calendarFailed.size ? t('msg.59db518a01')
+    : visible.length ? '' : t('msg.e1268e4d7e');
   byId('calendar-events').replaceChildren(...visible.map(event => {
     const item = el('li');
     const heading = el('h4');
@@ -82,7 +84,7 @@ function renderCalendar() {
     } else heading.textContent = event.title;
     item.append(el('small', dateLabel.format(new Date(event.date)) + (event.time ? ' · ' + event.time : '')), heading);
     if (event.location) item.append(el('p', event.location));
-    if (event.description) item.append(el('p', event.description));
+    if (event.description) {const description=el('p',event.description);item.append(description);if(event.contentPath)attachTranslation(item,event.contentPath,event,{[event.titleField||'title']:heading,description},{editorial:true});}
     return item;
   }));
 }
@@ -103,14 +105,14 @@ function loadMonth() {
       const date = item[field]?.toDate?.();
       if (!date || !Number.isFinite(date.getTime())) return null;
       return { date: romeDate.format(date), time: withTime ? romeTime.format(date) : '',
-        title: item[titleField] || 'Evento', description: item.description || '' };
+        title: item[titleField] || t('calendar.event'), description: item.description || '' };
     };
     const sources = [
-      ['webCalendarEvents', 'date', dateKey(month), dateKey(next), item => item],
+      ['webCalendarEvents', 'date', dateKey(month), dateKey(next), item => ({...item,contentPath:'webCalendarEvents/'+item.id})],
       ['events', 'scheduledAt', new Date(month.getTime() - dayMs), new Date(next.getTime() + dayMs),
-        item => legacy(item, 'scheduledAt', 'name', true)],
+        item => {const value=legacy(item,'scheduledAt','name',true);return value&&{...value,contentPath:'events/'+item.id,titleField:'name'};}],
       ['calendarEvents', 'date', new Date(month.getTime() - dayMs), new Date(next.getTime() + dayMs),
-        item => legacy(item, 'date', 'title', false)],
+        item => {const value=legacy(item,'date','title',false);return value&&{...value,contentPath:'calendarEvents/'+item.id};}],
     ];
     for (const [name, field, from, to, map] of sources) {
       calendarLoading.add(name);

@@ -25,8 +25,22 @@ service cloud.firestore {
       return request.resource.data.keys().hasAll(keys) && request.resource.data.keys().hasOnly(keys);
     }
 
+    function validContentFields(keys) {
+      return request.resource.data.keys().hasAll(keys)
+        && request.resource.data.keys().hasOnly(keys.concat(['sourceLanguage']))
+        && (!('sourceLanguage' in request.resource.data) || request.resource.data.sourceLanguage in ['it','es','en','und']);
+    }
+
     function verifiedGoogle() {
       return googleUser() && request.auth.token.email_verified == true && request.auth.token.email is string;
+    }
+
+    function validBlogFields() {
+      let keys = ['title', 'summary', 'body', 'published', 'updatedAt'];
+      return request.resource.data.keys().hasAll(keys)
+        && request.resource.data.keys().hasOnly(keys.concat(['sourceLanguage', 'contentKind']))
+        && (!('sourceLanguage' in request.resource.data) || request.resource.data.sourceLanguage in ['it','es','en','und'])
+        && (!('contentKind' in request.resource.data) || request.resource.data.contentKind in ['article','news','guide']);
     }
 
     function siteOwner() {
@@ -62,7 +76,7 @@ service cloud.firestore {
 
     match /webBlogPosts/{id} {
       allow get, list: if resource.data.published == true || siteAdmin();
-      allow create, update: if siteAdmin() && validFields(['title', 'summary', 'body', 'published', 'updatedAt'])
+      allow create, update: if siteAdmin() && validBlogFields()
         && textBetween(request.resource.data.title, 120) && textBetween(request.resource.data.summary, 280)
         && textBetween(request.resource.data.body, 15000) && request.resource.data.published is bool
         && request.resource.data.updatedAt is int && request.resource.data.updatedAt <= nowMillis() + 300000;
@@ -71,7 +85,7 @@ service cloud.firestore {
 
     match /webCalendarEvents/{id} {
       allow read: if true;
-      allow create, update: if siteAdmin() && validFields(['title', 'date', 'time', 'location', 'description'])
+      allow create, update: if siteAdmin() && validContentFields(['title', 'date', 'time', 'location', 'description'])
         && textBetween(request.resource.data.title, 120)
         && request.resource.data.date is string
         && request.resource.data.date.matches('[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])')
@@ -117,13 +131,13 @@ service cloud.firestore {
       allow get: if googleUser();
       allow list: if googleUser() && request.query.limit <= 50;
       allow create: if owner(request.resource.data.owner)
-        && validFields(['owner', 'origin', 'destination', 'departure', 'seats'])
+        && validContentFields(['owner', 'origin', 'destination', 'departure', 'seats'])
         && textBetween(request.resource.data.origin, 80)
         && textBetween(request.resource.data.destination, 80)
         && request.resource.data.departure is int && request.resource.data.departure > nowMillis()
         && request.resource.data.seats is int && request.resource.data.seats >= 1 && request.resource.data.seats <= 8;
       allow update: if (owner(resource.data.owner) || siteAdmin()) && request.resource.data.owner == resource.data.owner
-        && validFields(['owner', 'origin', 'destination', 'departure', 'seats'])
+        && validContentFields(['owner', 'origin', 'destination', 'departure', 'seats'])
         && textBetween(request.resource.data.origin, 80)
         && textBetween(request.resource.data.destination, 80)
         && request.resource.data.departure is int && request.resource.data.departure > nowMillis()
@@ -142,7 +156,7 @@ service cloud.firestore {
 
     match /webDriverReviews/{driverId}/reviews/{authorId} {
       function validReview() {
-        return validFields(['rating', 'text']) && request.resource.data.rating is int
+        return validContentFields(['rating', 'text']) && request.resource.data.rating is int
           && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
           && textBetween(request.resource.data.text, 500);
       }
@@ -155,7 +169,7 @@ service cloud.firestore {
 
     match /webJobOffers/{id} {
       function validJob() {
-        return validFields(['owner', 'title', 'company', 'location', 'description', 'phone', 'createdAt', 'expiresAt'])
+        return validContentFields(['owner', 'title', 'company', 'location', 'description', 'phone', 'createdAt', 'expiresAt'])
           && textBetween(request.resource.data.title, 120)
           && textBetween(request.resource.data.company, 100)
           && textBetween(request.resource.data.location, 100)
@@ -178,7 +192,7 @@ service cloud.firestore {
 
     match /webMarketOffers/{id} {
       function validProduct() {
-        return validFields(['owner', 'title', 'price', 'location', 'description', 'phone', 'createdAt', 'expiresAt'])
+        return validContentFields(['owner', 'title', 'price', 'location', 'description', 'phone', 'createdAt', 'expiresAt'])
           && textBetween(request.resource.data.title, 120)
           && request.resource.data.price is string && request.resource.data.price.matches('[0-9]{1,7}([.][0-9]{1,2})?')
           && textBetween(request.resource.data.location, 100)
@@ -201,7 +215,7 @@ service cloud.firestore {
 
     match /webRentalOffers/{id} {
       function validRental() {
-        return validFields(['owner', 'title', 'location', 'propertyType', 'rentCents', 'rooms', 'description', 'phone', 'createdAt', 'expiresAt'])
+        return validContentFields(['owner', 'title', 'location', 'propertyType', 'rentCents', 'rooms', 'description', 'phone', 'createdAt', 'expiresAt'])
           && textBetween(request.resource.data.title, 120) && textBetween(request.resource.data.location, 100)
           && request.resource.data.propertyType in ['departamento', 'casa', 'habitacion']
           && request.resource.data.rentCents is int && request.resource.data.rentCents >= 100 && request.resource.data.rentCents <= 10000000
@@ -220,12 +234,16 @@ service cloud.firestore {
       allow delete: if owner(resource.data.owner) || siteAdmin();
     }
 
+    // Translation data is accessible only through the authorised server, which rechecks the source.
+    match /webTranslations/{document=**} { allow read, write: if false; }
+    match /webTranslationLimits/{document=**} { allow read, write: if false; }
+
     // Preserve the confirmed legacy access for all authenticated mobile/backoffice users.
     // Web roles live only in webAdminConfig/webAdmins, never in the legacy users collection.
     match /{collection}/{document=**} {
       allow read, write: if request.auth != null &&
         !(collection in ['webDriverProfiles', 'webAvailableDrivers', 'webPlannedTrips', 'webTripContacts',
-          'webDriverReviews', 'webMarketOffers', 'webRentalOffers', 'webJobOffers', 'webAdminConfig', 'webAdmins', 'webDriverBlocks', 'webBlogPosts', 'webCalendarEvents']);
+          'webDriverReviews', 'webMarketOffers', 'webRentalOffers', 'webJobOffers', 'webAdminConfig', 'webAdmins', 'webDriverBlocks', 'webBlogPosts', 'webCalendarEvents', 'webTranslations', 'webTranslationLimits']);
     }
   }
 }
