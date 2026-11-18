@@ -20,7 +20,9 @@ let leaving=false;
 window.addEventListener('beforeunload',e=>{if(!leaving&&hasChanges()){e.preventDefault();e.returnValue='';}});
 document.querySelectorAll('[data-language]').forEach(link=>{
   link.href=localizedURL(location.href,link.dataset.language).href;
+  window.addEventListener('hashchange',()=>{link.href=localizedURL(location.href,link.dataset.language).href;});
   link.addEventListener('click',event=>{
+    link.href=localizedURL(location.href,link.dataset.language).href;
     if(hasChanges()&&!confirm(t('form.unsaved'))){event.preventDefault();return;}
     try{localStorage.setItem('paola-language',link.dataset.language);}catch{}
     leaving=true;

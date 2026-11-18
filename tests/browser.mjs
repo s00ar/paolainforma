@@ -33,6 +33,7 @@ try{
   assert.equal(await page.locator('link[hreflang]').count(),4);assert.equal((await page.locator('body').innerText()).includes('{{'),false);
   for(const width of [360,390,768,1440]){await page.setViewportSize({width,height:950});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${lang}/${route} overflow ${width}`);}
  }
+ await page.goto(base+'/en/noticias.html');await ready();await page.evaluate(()=>{location.hash='san-martino-2026';});await page.locator('[data-language="it"]').click();await ready();assert.match(page.url(),/\/it\/noticias.html#san-martino-2026/);
  await page.goto(base+'/tienda.html');await page.waitForURL('**/es/tienda.html');await ready();
  await page.locator('#publish-market').click();await page.locator('#googleLogin').click();await page.waitForFunction(()=>document.getElementById('market-dialog').open);
  await page.locator('#market-form [name="title"]').fill('Bicicletta usata');
