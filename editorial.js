@@ -193,13 +193,23 @@ let driverProfiles = [], driverBlocks = [];
 function renderDrivers() {
   const list = byId('editorial-driver-list');
   list.replaceChildren(...driverProfiles.map(driver => {
-    const row = el('li', driver.name);
+    const alwaysAvailable = driver.alwaysAvailable === true;
+    const row = el('li', alwaysAvailable ? driver.name + ' · ' + t('drivers.alwaysAvailable') : driver.name);
     row.append(el('div', undefined, 'editorial-actions'));
     row.lastChild.append(action(t('msg.a71b858d4f'), async () => {
       const name=prompt(t('msg.0b4fa8672d'),driver.name);if(name===null)return;
       const phone=prompt(t('ui.306d85ffd0'),driver.phone);if(phone===null)return;
       await write(()=>api.updateDoc(reference('webDriverProfiles',driver.id),{name:name.trim(),phone:phone.trim()}),t('msg.6dce2956f0'));
-    }), action(t('msg.9f6e59080b'), async () => {
+    }));
+    const availability = action(t(alwaysAvailable ? 'drivers.disableAlwaysAvailable' : 'drivers.enableAlwaysAvailable'), async () => {
+      availability.disabled = true;
+      try {
+        await write(() => api.updateDoc(reference('webDriverProfiles', driver.id), {alwaysAvailable: !alwaysAvailable}), t('msg.6dce2956f0'));
+      } finally {
+        availability.disabled = false;
+      }
+    });
+    row.lastChild.append(availability, action(t('msg.9f6e59080b'), async () => {
       if (!window.confirm(t('msg.a3628f7c8c') + driver.name + '?')) return;
       await write(async () => {
         const batch = api.writeBatch(db);

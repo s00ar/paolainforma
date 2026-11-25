@@ -62,5 +62,24 @@ try{
  await page.goto(base+'/en/viajes.html');await ready();await page.locator('#manage-driver').click();await page.locator('#driver-form [name="name"]').fill('Test Driver');await page.locator('#driver-form [name="phone"]').fill('+390000000001');await page.locator('#driver-form [name="consent"]').check();await page.locator('#driver-form [type="submit"]').click();await page.waitForFunction(()=>!document.getElementById('driver-dialog').open);
  await page.locator('#publish-trip').click();for(const [name,value] of Object.entries({origin:'Paola',destination:'Cosenza',departure:'2030-01-01T10:00',seats:'3',phone:'+390000000001'}))await page.locator('#trip-form [name="'+name+'"]').fill(value);await page.locator('#trip-form [name="consent"]').check();await page.locator('#trip-form [type="submit"]').click();await page.waitForFunction(()=>!document.getElementById('trip-dialog').open);assert.match(await page.locator('#trip-list').innerText(),/3 seats available/);
  await page.evaluate(()=>localStorage.setItem('qa-admin','yes'));await page.goto(base+'/en/noticias.html');await ready();await page.evaluate(()=>document.getElementById('login').click());await page.locator('#open-editorial').click();await page.locator('#blog-form [name="title"]').fill('Editorial test');await page.locator('#blog-form [name="summary"]').fill('Summary');await page.locator('#blog-form [name="body"]').fill('Body');await page.locator('#blog-form [name="published"]').check();await page.locator('#blog-form [type="submit"]').click();await page.locator('#editorial-blog-list li').waitFor();await page.locator('#editorial-blog-list button').getByText('Language versions').click();await page.locator('dialog[open]').last().getByRole('button',{name:'Save reviewed translation'}).click();await page.locator('dialog[open]').last().getByText('Reviewed translation',{exact:true}).waitFor();
+ await page.goto(base+'/en/viajes.html');await ready();
+ await page.evaluate(()=>window.qa.seed('webAvailableDrivers/qa',{name:'Test Driver',expiresAt:0}));
+ await page.locator('#driver-list').getByText('Test Driver').waitFor({state:'detached'});
+ await page.locator('#login').evaluate(button=>button.click());
+ await page.locator('#open-editorial').click();
+ await page.locator('#editorial-driver-list').evaluate(list=>list.closest('details').open=true);
+ await page.getByRole('button',{name:'Enable always available'}).click();
+ await page.getByRole('button',{name:'Disable always available'}).waitFor();
+ await page.locator('#editorial-dialog').evaluate(dialog=>dialog.close());
+ await page.locator('#driver-list').getByText('Always available',{exact:true}).waitFor();
+ await page.evaluate(()=>window.qa.seed('webAvailableDrivers/qa',{name:'Test Driver',expiresAt:Date.now()+3600000}));
+ assert.equal(await page.locator('#driver-list').getByText('Test Driver',{exact:true}).count(),1);
+ await page.locator('#driver-directory').getByText('Always available',{exact:true}).waitFor({state:'attached'});
+ await page.locator('#login').evaluate(button=>button.click());
+ await page.locator('#open-editorial').click();
+ await page.getByRole('button',{name:'Disable always available'}).click();
+ await page.getByRole('button',{name:'Enable always available'}).waitFor();
+ await page.locator('#editorial-dialog').evaluate(dialog=>dialog.close());
+ await page.locator('#driver-list').getByText(/^Available until /).waitFor();
  assert.deepEqual(errors,[]);console.log('PASS: 33 pages × 4 widths; navigation, metadata, old links, dirty forms, session, same shared item; translation/original/error/retry/search; job/rental/driver/trip forms and editorial translation UI. Firebase and provider simulated.');
 }finally{await browser.close();server.close();}

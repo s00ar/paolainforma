@@ -22,9 +22,9 @@ export function setDirectorySession(u){
  stops.push(api.onSnapshot(api.query(api.collection(db,'webAvailableDrivers'),api.limit(50)),s=>{availability=s.docs.map(d=>({...d.data(),id:d.id}));render();},()=>{availability=[];status.textContent=t('msg.cd48bbdd32');render();}));
 }
 function render(){
- if(!list)return;const active=id=>availability.some(a=>a.id===id&&a.expiresAt>Date.now());
- list.replaceChildren(...[...profiles].sort((a,b)=>Number(active(b.id))-Number(active(a.id))||a.name.localeCompare(b.name)).map(p=>{
- const row=node('li','','job-offer');const online=active(p.id);row.append(node('h3',p.name),node('p',online?t('msg.c6ce923835'):t('msg.801a29ae59'),online?'driver-online':'driver-offline'));
+ if(!list)return;const active=p=>p.alwaysAvailable===true||availability.some(a=>a.id===p.id&&a.expiresAt>Date.now());
+ list.replaceChildren(...[...profiles].sort((a,b)=>Number(active(b))-Number(active(a))||a.name.localeCompare(b.name)).map(p=>{
+ const row=node('li','','job-offer');const online=active(p);row.append(node('h3',p.name),node('p',p.alwaysAvailable===true?t('drivers.alwaysAvailable'):online?t('msg.c6ce923835'):t('msg.801a29ae59'),online?'driver-online':'driver-offline'));
  const rs=reviews.get(p.id);row.append(node('p',rs===null?t('msg.25cdaac2d7'):!rs?t('msg.fe648070bf'):rs.length?'★ '+new Intl.NumberFormat(locale,{minimumFractionDigits:1,maximumFractionDigits:1}).format(rs.reduce((n,r)=>n+r.rating,0)/rs.length)+' / 5 · '+t('reviews.count',{count:rs.length}):t('msg.931f146ca2')));
  const details=node('details','');details.append(node('summary',t('msg.9177d67ee5')));for(const r of rs||[]){const review=node('div','','review-entry');const reviewText=node('p',r.text);review.append(node('p','★'.repeat(r.rating)),reviewText);attachTranslation(review,'webDriverReviews/'+p.id+'/reviews/'+r.id,r,{text:reviewText});if(user?.uid===r.id||admin)review.append(button(t('msg.73db2f03a5'),()=>editReview(p,r)),button(t('msg.18a7c75142'),async()=>{if(confirm(t('msg.75e1a71e22')))try{await api.deleteDoc(api.doc(db,'webDriverReviews',p.id,'reviews',r.id));}catch{status.textContent=t('msg.cc199265e5');}}));details.append(review);}row.append(details);
  if(user&&user.uid!==p.id)row.append(button((rs||[]).some(r=>r.id===user.uid)?t('msg.fd1c58b41d'):t('msg.15ceaf279e'),()=>editReview(p,(rs||[]).find(r=>r.id===user.uid))));

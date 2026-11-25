@@ -111,8 +111,17 @@ service cloud.firestore {
       allow get: if googleUser();
       allow list: if googleUser();
       allow delete: if owner(uid) || siteAdmin();
-      allow create, update: if (driverAllowed(uid) || siteAdmin()) && validFields(['name', 'phone'])
-        && textBetween(request.resource.data.name, 70) && validPhone(request.resource.data.phone);
+      function validProfile() {
+        return request.resource.data.keys().hasAll(['name', 'phone'])
+          && request.resource.data.keys().hasOnly(['name', 'phone', 'alwaysAvailable'])
+          && textBetween(request.resource.data.name, 70) && validPhone(request.resource.data.phone)
+          && request.resource.data.get('alwaysAvailable', false) is bool;
+      }
+
+      allow create: if validProfile() && (siteAdmin() ||
+        (driverAllowed(uid) && !('alwaysAvailable' in request.resource.data)));
+      allow update: if validProfile() && (siteAdmin() ||
+        (driverAllowed(uid) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['alwaysAvailable'])));
     }
 
     match /webAvailableDrivers/{uid} {

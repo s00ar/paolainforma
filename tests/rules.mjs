@@ -22,6 +22,15 @@ try{
  await assertSucceeds(setDoc(doc(root,'webBlogPosts','draft'),{title:'Draft',summary:'Private',body:'Private body',published:false,updatedAt:now,sourceLanguage:'en'}));
  await assertFails(getDoc(doc(visitor,'webBlogPosts','draft')));await assertFails(getDoc(doc(other,'webBlogPosts','draft')));await assertSucceeds(getDoc(doc(admin,'webBlogPosts','draft')));
  await assertSucceeds(setDoc(doc(author,'webDriverProfiles','author'),{name:'Driver',phone:'+393331234567'}));
+ const profile=d=>doc(d,'webDriverProfiles','author');
+ await assertFails(setDoc(doc(other,'webDriverProfiles','other'),{name:'Driver',phone:'+393331234567',alwaysAvailable:true}));
+ await assertFails(updateDoc(profile(author),{alwaysAvailable:true}));
+ await assertFails(updateDoc(profile(admin),{alwaysAvailable:'yes'}));
+ await assertSucceeds(updateDoc(profile(admin),{alwaysAvailable:true}));
+ await assertSucceeds(setDoc(profile(author),{name:'Updated Driver',phone:'+393331234567'},{merge:true}));
+ await assertFails(setDoc(profile(author),{name:'Updated Driver',phone:'+393331234567'}));
+ await assertFails(updateDoc(profile(author),{alwaysAvailable:false}));
+ await assertSucceeds(updateDoc(profile(admin),{alwaysAvailable:false}));
  await assertSucceeds(setDoc(doc(other,'webDriverReviews','author','reviews','other'),{rating:4,text:'Buon viaggio',sourceLanguage:'it'}));
  await assertFails(setDoc(doc(author,'webDriverReviews','author','reviews','author'),{rating:5,text:'Self'}));
  await assertFails(updateDoc(doc(author,'webDriverReviews','author','reviews','other'),{text:'No'}));

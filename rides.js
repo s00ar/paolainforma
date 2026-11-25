@@ -11,8 +11,8 @@ const dateFormat = new Intl.DateTimeFormat(locale, {
   dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Rome',
 });
 let subscriptions = [];
-let drivers = [], trips = [];
-let driverError = '', tripError = '';
+let drivers = [], permanentDrivers = [], trips = [];
+let driverError = '', permanentDriverError = '', tripError = '';
 let siteModerator=false;
 window.addEventListener('site-role',e=>{siteModerator=e.detail.admin;renderLists();});
 let contactRequest=0;
@@ -76,13 +76,15 @@ function card(title, text, contact, remove, driver = false) {
 
 function renderLists() {
   const now = Date.now();
-  const active = drivers.filter(driver => driver.expiresAt > now);
+  const permanentIds = new Set(permanentDrivers.map(driver => driver.id));
+  const active = [...permanentDrivers, ...drivers.filter(driver => driver.expiresAt > now && !permanentIds.has(driver.id))];
+  const availabilityError = driverError || permanentDriverError;
   const planned = trips.filter(trip => trip.departure > now);
   const count = byId('driver-count');
-  count.hidden = !ridesEnabled || !state.user || Boolean(driverError);
+  count.hidden = !ridesEnabled || !state.user || Boolean(availabilityError);
   count.textContent = t('drivers.count',{count:active.length});
   byId('driver-list').replaceChildren(...active.map(driver =>
-    card(driver.name, t('msg.f630d46c25') + formatDate(driver.expiresAt), () => loadContact(driver.name, 'webDriverProfiles', driver.id), null, true)));
+    card(driver.name, driver.alwaysAvailable === true ? t('drivers.alwaysAvailable') : t('msg.f630d46c25') + formatDate(driver.expiresAt), () => loadContact(driver.name, 'webDriverProfiles', driver.id), null, true)));
   byId('trip-list').replaceChildren(...planned.map(trip => card(
     trip.origin + ' → ' + trip.destination,
     formatDate(trip.departure) + t('msg.f991c4ca15') + t('trip.seats',{count:trip.seats}),
@@ -100,9 +102,9 @@ function renderLists() {
   });
   const unavailable = !ridesEnabled ? t('msg.95d78657d6')
     : !state.user ? t('msg.1f17364ce0') : '';
-  byId('driver-status').textContent = unavailable || driverError || (active.length ? '' : t('msg.9c886557f5'));
+  byId('driver-status').textContent = unavailable || availabilityError || (active.length ? '' : t('msg.9c886557f5'));
   byId('trip-status').textContent = unavailable || tripError || (planned.length ? '' : t('msg.590b1548f7'));
-  for (const [kind, error, entries] of [['driver', driverError, active], ['trip', tripError, planned]]) {
+  for (const [kind, error, entries] of [['driver', availabilityError, active], ['trip', tripError, planned]]) {
     const state = unavailable ? 'unavailable' : [t('ui.734ce7dc6a'),t('ui.1f8a457a29')].includes(error) ? 'loading'
       : error ? 'error' : entries.length ? 'ready' : 'empty';
     byId(kind + '-status').dataset.state = state;
@@ -115,10 +117,11 @@ function observeLists() {
   subscriptions.forEach(unsubscribe => unsubscribe());
   subscriptions = [];
   drivers = [];
+  permanentDrivers = [];
   trips = [];
-  driverError = tripError = '';
+  driverError = permanentDriverError = tripError = '';
   if (state.user && ridesEnabled) {
-    driverError = t('ui.734ce7dc6a');
+    driverError = permanentDriverError = t('ui.734ce7dc6a');
     tripError = t('ui.1f8a457a29');
     const upcoming = (name, field) => state.api.query(state.api.collection(state.db, name),
       state.api.where(field, '>', Date.now()), state.api.orderBy(field), state.api.limit(50));
@@ -131,6 +134,16 @@ function observeLists() {
       }, () => {
         drivers = [];
         driverError = t('msg.f4bd73139c');
+        renderLists();
+      }),
+      state.api.onSnapshot(state.api.query(state.api.collection(state.db, 'webDriverProfiles'),
+        state.api.where('alwaysAvailable', '==', true)), snapshot => {
+        permanentDrivers = rows(snapshot);
+        permanentDriverError = '';
+        renderLists();
+      }, () => {
+        permanentDrivers = [];
+        permanentDriverError = t('msg.f4bd73139c');
         renderLists();
       }),
       state.api.onSnapshot(upcoming('webPlannedTrips', 'departure'), snapshot => {
@@ -186,11 +199,13 @@ async function openDriverForm() {
     const listing = await state.api.getDocFromServer(state.api.doc(state.db, 'webAvailableDrivers', user.uid));
     if (state.user?.uid !== user.uid) return;
     const activeUntil = listing.data()?.expiresAt || 0;
+    const alwaysAvailable = profile.data()?.alwaysAvailable === true;
     driverForm.reset();
     driverForm.elements.name.value = profile.data()?.name || user.displayName || '';
     driverForm.elements.phone.value = profile.data()?.phone || '';
-    stopDriver.hidden = activeUntil <= Date.now();
-    byId('my-driver-status').textContent = stopDriver.hidden ? t('msg.9691ef3b9d')
+    stopDriver.hidden = alwaysAvailable || activeUntil <= Date.now();
+    byId('my-driver-status').textContent = alwaysAvailable ? t('drivers.alwaysAvailable')
+      : stopDriver.hidden ? t('msg.9691ef3b9d')
       : t('msg.6a03a56965') + formatDate(activeUntil) + '.';
     driverForm.querySelector('.form-status').textContent = '';
     byId('driver-dialog').showModal();
@@ -231,7 +246,7 @@ driverForm.onsubmit = event => {
     const phone = phoneNumber(form.get('phone'));
     if (!name || !form.has('consent')) throw new Error(t('msg.b97a8eac9f'));
     const batch = state.api.writeBatch(state.db);
-    batch.set(state.api.doc(state.db, 'webDriverProfiles', uid), { name, phone });
+    batch.set(state.api.doc(state.db, 'webDriverProfiles', uid), { name, phone }, { merge: true });
     batch.set(state.api.doc(state.db, 'webAvailableDrivers', uid), {
       name, expiresAt: Date.now() + Number(form.get('hours')) * hour,
     });
